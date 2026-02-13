@@ -1,73 +1,56 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Awais Blog Architect | Humanized SEO Content</title>
+    <!-- Tailwind CSS with Typography plugin -->
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
         }
-        /* Custom Prose Overrides to match Google Doc / Premium Blog feel */
-        .prose h1 { 
-            color: #0f172a; 
-            font-weight: 800; 
-            font-size: 2.5rem; 
-            line-height: 1.2; 
-            margin-bottom: 1.5rem;
+        /* Custom Prose Overrides for high-end blog aesthetic */
+        .prose h1 { color: #0f172a; font-weight: 800; font-size: 2.5rem; line-height: 1.2; margin-bottom: 1.5rem; }
+        .prose h2 { color: #1e293b; font-weight: 700; font-size: 1.875rem; margin-top: 2.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
+        .prose h3 { color: #334155; font-weight: 600; font-size: 1.5rem; margin-top: 2rem; margin-bottom: 1rem; }
+        .prose p { color: #475569; font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.25rem; }
+        .prose ul, .prose ol { margin-bottom: 1.5rem; }
+        .prose li { color: #475569; margin-bottom: 0.5rem; }
+        .prose strong { color: #0f172a; font-weight: 700; }
+        
+        /* Smooth transitions for UI elements */
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
         }
-        .prose h2 { 
-            color: #1e293b; 
-            font-weight: 700; 
-            font-size: 1.875rem; 
-            margin-top: 2.5rem; 
-            margin-bottom: 1.25rem;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 0.5rem;
-        }
-        .prose h3 { 
-            color: #334155; 
-            font-weight: 600; 
-            font-size: 1.5rem; 
-            margin-top: 2rem; 
-            margin-bottom: 1rem;
-        }
-        .prose p { 
-            color: #475569; 
-            font-size: 1.125rem; 
-            line-height: 1.75; 
-            margin-bottom: 1.25rem;
-        }
-        .prose ul, .prose ol {
-            margin-bottom: 1.5rem;
-        }
-        .prose li {
-            color: #475569;
-            margin-bottom: 0.5rem;
-        }
-        .prose strong {
-            color: #0f172a;
-            font-weight: 700;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 <script type="importmap">
 {
   "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
-    "marked": "https://esm.sh/marked@12.0.0"
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+    "marked": "https://esm.sh/marked@^17.0.2",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4"
   }
 }
 </script>
 </head>
 <body>
     <div id="root"></div>
+    <!-- Vite entry point: index.tsx will be bundled into index.js by Vercel -->
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>
