@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
+    // Vercel build ke waqt process.env.API_KEY ko client side code mein inject karega
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
   },
   server: {
@@ -11,13 +12,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', '@google/genai', 'marked'],
-        },
-      },
-    },
+    sourcemap: false
   }
 });
