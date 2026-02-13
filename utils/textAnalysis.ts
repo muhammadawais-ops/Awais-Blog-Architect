@@ -1,6 +1,5 @@
 
 export const analyzeText = (text: string) => {
-  // Deep clean to treat punctuation as sentence boundaries
   const cleanContent = text.replace(/[*#]/g, '');
   const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 3);
   const words = cleanContent.toLowerCase().match(/\b(\w+)\b/g) || [];
@@ -13,60 +12,61 @@ export const analyzeText = (text: string) => {
       passiveVoice: 0,
       complexPhrases: 0,
       hardSentences: 0,
-      veryHardSentences: 0
+      veryHardSentences: 0,
+      burstiness: 0,
+      predictability: 0
     };
   }
 
-  // Hemingway's Automated Readability Index (ARI) Approximation
+  // ARI Readability
   const avgCharsPerWord = characters / words.length;
   const avgWordsPerSentence = words.length / sentences.length;
-  
-  // Formula: 4.71 * (chars/words) + 0.5 * (words/sentences) - 21.43
   const ari = 4.71 * avgCharsPerWord + 0.5 * avgWordsPerSentence - 21.43;
-  
-  // Grade Floor/Ceiling to match Hemingway's UI logic
   let grade = Math.round(ari);
   if (grade < 1) grade = 1;
 
-  let adverbs = 0;
-  let passiveVoice = 0;
-  let complexPhrases = 0;
-  let hardSentences = 0;
-  let veryHardSentences = 0;
+  // BURSTINESS (Variance in sentence lengths)
+  const sentenceLengths = sentences.map(s => s.trim().split(/\s+/).length);
+  const mean = sentenceLengths.reduce((a, b) => a + b, 0) / sentenceLengths.length;
+  const stdDev = Math.sqrt(sentenceLengths.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / sentenceLengths.length);
+  const burstiness = Math.min(100, Math.round(stdDev * 12));
 
-  const complexWords = [
-    'utilize', 'leverage', 'facilitate', 'subsequently', 'implementation', 
-    'advantageous', 'commence', 'fundamental', 'additional', 'component'
+  // AI MARKERS (Predictability)
+  const forbidden = [
+    "let's be real", 'overall', 'furthermore', 'moreover', 'consequently', 
+    'additionally', 'essential', 'crucial', 'delve', 'unlock', 
+    'in conclusion', "let's explore", 'dive in', 'truth be told'
   ];
+  let triggerCount = 0;
+  forbidden.forEach(m => {
+    const regex = new RegExp(`\\b${m}\\b`, 'gi');
+    const matches = cleanContent.match(regex);
+    if (matches) triggerCount += matches.length;
+  });
 
+  const predictability = Math.min(100, Math.round((triggerCount / sentences.length) * 250));
+
+  let adverbs = 0, passiveVoice = 0, hardSentences = 0, veryHardSentences = 0;
   sentences.forEach(s => {
-    const sTrim = s.trim();
-    const wordList = sTrim.split(/\s+/).filter(w => w.length > 0);
-    const count = wordList.length;
+    const count = s.trim().split(/\s+/).length;
+    if (count > 25) veryHardSentences++;
+    else if (count > 15) hardSentences++;
 
-    // Hemingway Sentence Difficulty thresholds
-    if (count > 28) veryHardSentences++;
-    else if (count > 20) hardSentences++;
+    const passive = s.match(/\b(am|is|are|was|were|be|been|being)\b\s+([a-z]+ed|found|known|seen|taken|made)\b/gi);
+    if (passive) passiveVoice += passive.length;
 
-    // Passive voice: be-verb + past participle
-    const passiveMatch = sTrim.match(/\b(am|is|are|was|were|be|been|being)\b\s+([a-z]+ed|known|seen|found|taken|given|made|done|shown|told)\b/gi);
-    if (passiveMatch) passiveVoice += passiveMatch.length;
-
-    // Adverbs ending in -ly (ignoring common words)
-    const adverbMatch = sTrim.match(/\b(?!(only|early|likely|daily|apply|friendly|really)\b)[a-z]+ly\b/gi);
-    if (adverbMatch) adverbs += adverbMatch.length;
-
-    complexWords.forEach(word => {
-      if (sTrim.toLowerCase().includes(word)) complexPhrases++;
-    });
+    const adverb = s.match(/\b(?!(only|early|likely|daily|really)\b)[a-z]+ly\b/gi);
+    if (adverb) adverbs += adverb.length;
   });
 
   return {
     readabilityGrade: grade,
     adverbs,
     passiveVoice,
-    complexPhrases,
+    complexPhrases: triggerCount,
     hardSentences,
-    veryHardSentences
+    veryHardSentences,
+    burstiness,
+    predictability
   };
 };

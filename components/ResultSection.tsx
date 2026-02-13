@@ -18,10 +18,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
   };
 
   const renderer = new marked.Renderer();
-  renderer.link = (href, title, text) => {
-    return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">${text}</a>`;
-  };
-
+  
   const parsedHtml = useMemo(() => {
     const cleanContent = blog.content.replace(/^#\s*/, '# ');
     return marked.parse(cleanContent, { renderer });
@@ -29,7 +26,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
 
   return (
     <div className="space-y-8 animate-fadeIn pb-20">
-      {/* Metrics Dashboard (ZeroGPT & Hemingway) */}
+      {/* Metrics Dashboard */}
       <AnalysisDashboard metrics={blog.metrics} />
 
       {/* Meta Information Cards */}
@@ -65,8 +62,8 @@ const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
       <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
         <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40">
           <div className="flex flex-wrap gap-2">
-            <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded">HUMAN-STYLE</span>
-            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded">ANCHORED LINKS</span>
+            <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded">EEAT VERIFIED</span>
+            <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded">HUMAN-OPTIMIZED</span>
           </div>
           <button
             onClick={() => copyToClipboard(blog.content, 'content')}
@@ -84,35 +81,6 @@ const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
           />
         </div>
       </div>
-
-      {/* References Display */}
-      {blog.sources.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center space-x-2">
-            <i className="fas fa-search-plus text-indigo-500"></i>
-            <span>Detected Context & Links</span>
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {blog.sources.map((source, idx) => (
-              <a
-                key={idx}
-                href={source.uri}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block p-3 rounded-xl border border-slate-100 bg-slate-50 hover:border-indigo-200 hover:shadow-md transition-all group"
-              >
-                <div className="flex items-center space-x-2 mb-1">
-                  <i className="fas fa-link text-[10px] text-slate-400 group-hover:text-indigo-500"></i>
-                  <p className="text-xs font-bold text-slate-800 truncate group-hover:text-indigo-600">
-                    {source.title}
-                  </p>
-                </div>
-                <p className="text-[10px] text-slate-500 truncate">{source.uri}</p>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

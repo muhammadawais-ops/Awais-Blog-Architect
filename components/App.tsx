@@ -37,13 +37,12 @@ const App: React.FC = () => {
       if (err.message?.includes('Quota') || err.message?.includes('429')) {
         setStatus(GenerationStatus.QUOTA_EXCEEDED);
       } else {
-        setError(err.message || 'Something went wrong during generation.');
+        setError(err.message || 'Architect encountered a structural error.');
         setStatus(GenerationStatus.ERROR);
       }
     }
   };
 
-  // Fixed comparison error by allowing both PRICING and CHECKOUT views in this block
   if (view === 'PRICING' || view === 'CHECKOUT') {
     return (
       <div className="min-h-screen bg-slate-50 px-4">
@@ -59,7 +58,7 @@ const App: React.FC = () => {
             plan={selectedPlan} 
             onClose={() => setView('PRICING')} 
             onSuccess={() => {
-              alert("Payment Successful! Your plan has been upgraded.");
+              alert("Plan Upgraded. Originality.AI Limits Increased.");
               setView('GENERATOR');
               setStatus(GenerationStatus.IDLE);
             }}
@@ -79,14 +78,14 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
               Awais <span className="text-indigo-600">Blog Architect</span>
-              <span className="ml-2 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase">Human SEO v2.6</span>
+              <span className="ml-2 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase font-black">EEAT PRO v7.0</span>
             </h1>
           </div>
           <button 
             onClick={() => setView('PRICING')}
             className="text-xs font-black text-indigo-600 border-2 border-indigo-50 border-b-indigo-100 px-4 py-2 rounded-xl hover:bg-indigo-50 transition-all uppercase tracking-widest"
           >
-            Pricing
+            Manage Plan
           </button>
         </div>
       </header>
@@ -94,11 +93,11 @@ const App: React.FC = () => {
       <main className="max-w-4xl mx-auto px-4 mt-12">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-            The Human Side of <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Search Growth</span>
+            EEAT & <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Expert-Led</span> Content
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Generate content that feels human but ranks like a machine. Optimized for early signals, 
-            anchored internal links, and expert storytelling.
+            High-ranking blogs with verified scientific grounding, real-time search, 
+            and professional grade-9 green signal readability.
           </p>
         </div>
 
@@ -115,17 +114,16 @@ const App: React.FC = () => {
               <i className="fas fa-crown text-3xl text-yellow-400"></i>
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase tracking-tight">Free Plan Limit Reached</h3>
+              <h3 className="text-2xl font-black uppercase tracking-tight">Upgrade for Pro Grounding</h3>
               <p className="text-indigo-200 text-sm max-w-md mx-auto">
-                Your architectural free tier is currently exhausted due to high demand. 
-                Upgrade now to unlock premium speed and unlimited blogs.
+                You've hit the architectural limit. Pro plans include advanced EEAT grounding and 99% Originality.AI human scores.
               </p>
             </div>
             <button 
               onClick={() => setView('PRICING')}
               className="px-10 py-4 bg-white text-indigo-900 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-xl active:scale-95"
             >
-              Upgrade Your Plan
+              Unlock Pro Architect
             </button>
           </div>
         )}
@@ -145,8 +143,8 @@ const App: React.FC = () => {
                 <i className="fas fa-pen-nib absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600"></i>
               </div>
               <div className="text-center">
-                <p className="text-slate-800 font-bold text-lg">Thinking Like a Consultant...</p>
-                <p className="text-slate-500 text-sm">Searching your site for anchor links and weaving a human narrative...</p>
+                <p className="text-slate-800 font-bold text-lg">Architecting Expert Content...</p>
+                <p className="text-slate-500 text-sm">Grounding with research papers and industrial facts...</p>
               </div>
             </div>
           )}

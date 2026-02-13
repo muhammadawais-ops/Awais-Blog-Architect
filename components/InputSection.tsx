@@ -15,122 +15,111 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
     setInputs({ ...inputs, [name]: name === 'wordCount' ? parseInt(value) || 0 : value });
   };
 
+  const loadTemplate = () => {
+    const template = `- Client Niche: 
+- Years of Experience: 
+- Business Goals: 
+- Target Audience: 
+- Audience Stage: (Cold/Warm)
+- Neurological Triggers: (Scarcity/Social Proof/Authority)
+- Brand Tone: (Professional/Luxury/Friendly)
+- UVP: 
+- Services Highlighted: 
+- CTA Style: (Soft/Direct)
+- Competitor Edge: `;
+    setInputs({ ...inputs, businessDetails: template });
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-8">
-      <div className="flex items-center space-x-3 text-indigo-600 border-b border-slate-100 pb-4">
-        <i className="fas fa-drafting-compass text-2xl"></i>
-        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Project Parameters</h2>
+      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex items-center space-x-3 text-indigo-600">
+          <i className="fas fa-microchip text-2xl"></i>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Architectural Inputs</h2>
+        </div>
+        <span className="text-[10px] bg-slate-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest">MUM/BERT Optimized</span>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        <div className="space-y-2">
-          <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Main Topic / Working Title</label>
-          <input
-            type="text"
-            name="topic"
-            value={inputs.topic}
-            onChange={handleChange}
-            placeholder="e.g. Modern Architecture Trends 2025"
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
-          />
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center">
-              Primary Keyword 
-              <span className="ml-2 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded shadow-sm">Target</span>
-            </label>
+            <label className="text-xs font-bold text-slate-700 uppercase">Topic / Headline</label>
+            <input
+              type="text"
+              name="topic"
+              value={inputs.topic}
+              onChange={handleChange}
+              placeholder="The focus of your blog..."
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700 uppercase">Primary Keyword</label>
             <input
               type="text"
               name="primaryKeyword"
               value={inputs.primaryKeyword}
               onChange={handleChange}
-              placeholder="The main search term"
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Secondary Keywords</label>
-            <input
-              type="text"
-              name="secondaryKeywords"
-              value={inputs.secondaryKeywords}
-              onChange={handleChange}
-              placeholder="Keyword 1, Keyword 2, ..."
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
+              placeholder="e.g. Luxury Interior Design"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Website Domain</label>
-            <div className="relative">
-              <i className="fas fa-globe absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-              <input
-                type="url"
-                name="websiteUrl"
-                value={inputs.websiteUrl}
-                onChange={handleChange}
-                placeholder="https://example.com"
-                className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
-              />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 space-y-2">
+            <label className="text-xs font-bold text-slate-700 uppercase">Target Domain (Optional)</label>
+            <input
+              type="url"
+              name="websiteUrl"
+              value={inputs.websiteUrl}
+              onChange={handleChange}
+              placeholder="https://yourbrand.com"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
+            />
           </div>
-
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 uppercase tracking-wide">Word Count Target</label>
+            <label className="text-xs font-bold text-slate-700 uppercase">Word Count</label>
             <input
               type="number"
               name="wordCount"
               value={inputs.wordCount}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2">
-            Expert Context
-            <span className="text-[10px] text-slate-400 font-normal normal-case italic">(Tone, business info, specific details)</span>
-          </label>
+          <div className="flex justify-between items-center">
+            <label className="text-xs font-bold text-slate-700 uppercase">Expert Context (EEAT Parameters)</label>
+            <button 
+              onClick={loadTemplate}
+              className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-tighter"
+            >
+              <i className="fas fa-plus mr-1"></i> Load Template
+            </button>
+          </div>
           <textarea
             name="businessDetails"
             value={inputs.businessDetails}
             onChange={handleChange}
-            rows={4}
-            placeholder="Tell the architect about your business or specific perspective to make it sound human..."
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all outline-none resize-none"
+            rows={10}
+            placeholder="Paste your niche points here (Niche, Years of Experience, UVP, etc.)"
+            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all font-mono text-sm"
           ></textarea>
         </div>
       </div>
 
       <button
         onClick={onGenerate}
-        disabled={isLoading || !inputs.topic || !inputs.primaryKeyword}
-        className={`w-full py-5 rounded-2xl font-black text-lg text-white shadow-2xl transition-all flex items-center justify-center space-x-3 ${
-          isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-indigo-200 hover:-translate-y-1 active:scale-95'
+        disabled={isLoading || !inputs.topic}
+        className={`w-full py-5 rounded-2xl font-black text-lg text-white shadow-2xl transition-all ${
+          isLoading ? 'bg-indigo-400 cursor-wait' : 'bg-slate-900 hover:bg-black active:scale-[0.98]'
         }`}
       >
-        {isLoading ? (
-          <>
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            <span>Architecting Content...</span>
-          </>
-        ) : (
-          <>
-            <i className="fas fa-hammer"></i>
-            <span>Build My Blog</span>
-          </>
-        )}
+        {isLoading ? 'Architecting Expert Content...' : 'Generate Pro Humanized Content'}
       </button>
-      
-      <p className="text-center text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-        ZeroGPT & Hemingway Optimized Generation
-      </p>
     </div>
   );
 };

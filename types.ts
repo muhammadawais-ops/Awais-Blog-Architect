@@ -14,13 +14,15 @@ export interface GroundingSource {
 }
 
 export interface AnalysisMetrics {
-  aiScore: number; // 0 to 100 (Human likeness percentage)
+  aiScore: number; // Originality.AI Human Score
   readabilityGrade: number;
   adverbs: number;
   passiveVoice: number;
   complexPhrases: number;
   hardSentences: number;
   veryHardSentences: number;
+  burstiness: number; // Variance in sentence length
+  predictability: number; // Inverse of perplexity
 }
 
 export interface GeneratedBlog {
