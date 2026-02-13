@@ -4,6 +4,7 @@ import { BlogInputs, GeneratedBlog, GroundingSource } from "../types";
 import { analyzeText } from "../utils/textAnalysis";
 
 export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedBlog> => {
+  // Using the GoogleGenAI instance with the API key from environment variables
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const systemInstruction = `
@@ -56,13 +57,14 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
   `;
 
   try {
+    // Basic Text Tasks (e.g., summarization, proofreading, and simple Q&A): 'gemini-3-flash-preview'
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         systemInstruction,
         tools: [{ googleSearch: {} }],
-        temperature: 0.6, // Further reduced for precision
+        temperature: 0.7,
       },
     });
 
@@ -77,13 +79,27 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
     
     content = content.replace(/[\u2013\u2014]/g, '-');
 
+    // Using responseSchema for JSON response as recommended by guidelines
     const analysisResponse = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Rate the human quality of this text from 0 to 100. Return JSON: {"humanPercent": number} 
       Text: ${content.substring(0, 1000)}`,
-      config: { responseMimeType: "application/json" }
+      config: { 
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            humanPercent: {
+              type: Type.NUMBER,
+              description: "Percentage of human likeness from 0 to 100."
+            }
+          },
+          required: ["humanPercent"]
+        }
+      }
     });
 
+    // Directly accessing .text property (not a method)
     const aiRes = JSON.parse(analysisResponse.text || '{"humanPercent": 98}');
     const textMetrics = analyzeText(content);
 
@@ -107,7 +123,10 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
         ...textMetrics
       }
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message?.includes('429')) {
+      throw new Error("API Quota Exhausted. Please wait a minute or upgrade to a paid plan in Google AI Studio.");
+    }
     console.error("Architect Error:", error);
     throw error;
   }

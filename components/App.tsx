@@ -1,11 +1,15 @@
 
 import React, { useState } from 'react';
-import { BlogInputs, GeneratedBlog, GenerationStatus } from '../types';
+import { BlogInputs, GeneratedBlog, GenerationStatus, ViewState } from '../types';
 import { generateSEOContent } from '../services/geminiService';
 import InputSection from './InputSection';
 import ResultSection from './ResultSection';
+import PricingPage from './PricingPage';
+import CheckoutModal from './CheckoutModal';
 
 const App: React.FC = () => {
+  const [view, setView] = useState<ViewState>('GENERATOR');
+  const [selectedPlan, setSelectedPlan] = useState<{name: string, price: string} | null>(null);
   const [inputs, setInputs] = useState<BlogInputs>({
     topic: '',
     primaryKeyword: '',
@@ -30,13 +34,43 @@ const App: React.FC = () => {
         document.getElementById('result-area')?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong during generation.');
-      setStatus(GenerationStatus.ERROR);
+      if (err.message?.includes('Quota') || err.message?.includes('429')) {
+        setStatus(GenerationStatus.QUOTA_EXCEEDED);
+      } else {
+        setError(err.message || 'Something went wrong during generation.');
+        setStatus(GenerationStatus.ERROR);
+      }
     }
   };
 
+  // Fixed comparison error by allowing both PRICING and CHECKOUT views in this block
+  if (view === 'PRICING' || view === 'CHECKOUT') {
+    return (
+      <div className="min-h-screen bg-slate-50 px-4">
+        <PricingPage 
+          onBack={() => setView('GENERATOR')} 
+          onSelectPlan={(plan) => {
+            setSelectedPlan(plan);
+            setView('CHECKOUT');
+          }}
+        />
+        {view === 'CHECKOUT' && selectedPlan && (
+          <CheckoutModal 
+            plan={selectedPlan} 
+            onClose={() => setView('PRICING')} 
+            onSuccess={() => {
+              alert("Payment Successful! Your plan has been upgraded.");
+              setView('GENERATOR');
+              setStatus(GenerationStatus.IDLE);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 relative">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -48,6 +82,12 @@ const App: React.FC = () => {
               <span className="ml-2 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase">Human SEO v2.6</span>
             </h1>
           </div>
+          <button 
+            onClick={() => setView('PRICING')}
+            className="text-xs font-black text-indigo-600 border-2 border-indigo-50 border-b-indigo-100 px-4 py-2 rounded-xl hover:bg-indigo-50 transition-all uppercase tracking-widest"
+          >
+            Pricing
+          </button>
         </div>
       </header>
 
@@ -68,6 +108,27 @@ const App: React.FC = () => {
           onGenerate={handleGenerate} 
           isLoading={status === GenerationStatus.LOADING}
         />
+
+        {status === GenerationStatus.QUOTA_EXCEEDED && (
+          <div className="mt-8 p-8 bg-indigo-900 rounded-3xl text-white shadow-2xl animate-fadeIn border border-indigo-700 flex flex-col items-center text-center space-y-6">
+            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+              <i className="fas fa-crown text-3xl text-yellow-400"></i>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black uppercase tracking-tight">Free Plan Limit Reached</h3>
+              <p className="text-indigo-200 text-sm max-w-md mx-auto">
+                Your architectural free tier is currently exhausted due to high demand. 
+                Upgrade now to unlock premium speed and unlimited blogs.
+              </p>
+            </div>
+            <button 
+              onClick={() => setView('PRICING')}
+              className="px-10 py-4 bg-white text-indigo-900 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-xl active:scale-95"
+            >
+              Upgrade Your Plan
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-3 text-red-700">

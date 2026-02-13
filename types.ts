@@ -35,5 +35,8 @@ export enum GenerationStatus {
   IDLE = 'IDLE',
   LOADING = 'LOADING',
   SUCCESS = 'SUCCESS',
-  ERROR = 'ERROR'
+  ERROR = 'ERROR',
+  QUOTA_EXCEEDED = 'QUOTA_EXCEEDED'
 }
+
+export type ViewState = 'GENERATOR' | 'PRICING' | 'CHECKOUT';
