@@ -7,7 +7,7 @@ import ResultSection from './ResultSection';
 import PricingPage from './PricingPage';
 import CheckoutModal from './CheckoutModal';
 
-const USAGE_KEY = 'awais_architect_usage_v8_2';
+const USAGE_KEY = 'awais_architect_usage_v8_3';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('GENERATOR');
@@ -35,7 +35,7 @@ const App: React.FC = () => {
         const parsed = JSON.parse(data);
         if (parsed.date === today) return parsed;
       }
-      // Default for Free Tier: 1500 Credits (3 blogs worth)
+      // Default for Free Tier: 1500 Credits (Each blog = 500, Total = 3 blogs)
       return { count: 0, credits: 1500, date: today, type: 'FREE' };
     } catch (e) {
       return { count: 0, credits: 1500, date: new Date().toDateString(), type: 'FREE' };
@@ -44,9 +44,10 @@ const App: React.FC = () => {
 
   const usage = getUsageData();
   const currentCredits = usage.credits;
+  const totalLimit = isPaidUser ? 50000 : 1500;
 
   const handleGenerate = async () => {
-    // 1. Check if tokens/credits are enough
+    // Check if tokens/credits are enough
     if (currentCredits < 500 && !isPaidUser) {
       setStatus(GenerationStatus.QUOTA_EXCEEDED);
       return;
@@ -58,8 +59,8 @@ const App: React.FC = () => {
       const result = await generateSEOContent(inputs);
       setGeneratedBlog(result);
       
-      // 2. Success! Deduct Credits
-      const cost = 500; // Fixed cost per architect session
+      // Success! Deduct Credits
+      const cost = 500; 
       const newData = {
         ...usage,
         count: usage.count + 1,
@@ -128,22 +129,18 @@ const App: React.FC = () => {
             </h1>
           </div>
 
-          {/* Service Status & Global Limits Label */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">
-              <div className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-              </div>
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
-                {isPaidUser ? 'Dedicated Node' : 'Shared Free Tier: 15 RPM'}
-              </span>
+          <div className="flex items-center space-x-2 md:space-x-4">
+            {/* Total Daily Limit Label */}
+            <div className="hidden sm:flex flex-col items-end leading-none border-r border-slate-100 pr-4">
+               <span className="text-[9px] font-black text-slate-400 uppercase">Daily System Limit</span>
+               <span className="text-sm font-bold text-slate-500">{totalLimit.toLocaleString()}</span>
             </div>
 
-            <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-xl">
-               <i className={`fas ${isPaidUser ? 'fa-bolt text-yellow-500' : 'fa-database text-indigo-400'} text-xs`}></i>
+            {/* Available Balance (The Real-Time Counter) */}
+            <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-xl shadow-sm">
+               <i className={`fas ${isPaidUser ? 'fa-bolt text-yellow-500' : 'fa-battery-half text-indigo-400'} text-xs`}></i>
                <div className="flex flex-col leading-none">
-                  <span className="text-[10px] font-black text-indigo-700 uppercase">{isPaidUser ? 'Personal Credits' : 'System Energy'}</span>
+                  <span className="text-[9px] font-black text-indigo-700 uppercase">Available Balance</span>
                   <span className="text-sm font-black text-slate-900">{currentCredits.toLocaleString()}</span>
                </div>
             </div>
@@ -166,17 +163,10 @@ const App: React.FC = () => {
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
             High-ranking blogs with verified scientific grounding and snippet-optimized FAQs.
           </p>
-          {!isPaidUser && (
-            <div className="mt-6 p-4 bg-slate-900 rounded-2xl text-white inline-flex flex-col items-center">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-1">Global Shared Capacity Indicator</p>
-              <div className="flex gap-1">
-                {[...Array(15)].map((_, i) => (
-                  <div key={i} className={`h-4 w-1.5 rounded-full ${i < 12 ? 'bg-indigo-500' : 'bg-slate-700'}`}></div>
-                ))}
-              </div>
-              <p className="mt-2 text-[9px] text-slate-400 font-medium italic">Shared 15 RPM Rate Limit — Use Wisely during peak hours</p>
-            </div>
-          )}
+          <div className="mt-4 inline-flex items-center gap-2 px-4 py-1 bg-slate-100 rounded-full border border-slate-200">
+             <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></div>
+             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Shared Global Tier (15 RPM Max)</p>
+          </div>
         </div>
 
         <InputSection 
@@ -189,20 +179,19 @@ const App: React.FC = () => {
         {status === GenerationStatus.QUOTA_EXCEEDED && (
           <div className="mt-8 p-8 bg-indigo-900 rounded-3xl text-white shadow-2xl animate-fadeIn border border-indigo-700 flex flex-col items-center text-center space-y-6">
             <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
-              <i className="fas fa-battery-empty text-3xl text-red-400"></i>
+              <i className="fas fa-calendar-check text-3xl text-indigo-300"></i>
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase tracking-tight">System Energy Depleted</h3>
+              <h3 className="text-2xl font-black uppercase tracking-tight">Daily Limit Reached</h3>
               <p className="text-indigo-200 text-sm max-w-md mx-auto">
-                Your shared free tier tokens (1,500 Credits) have been exhausted for today. 
-                Unlock a private credit pool to continue generating expert content.
+                You've used your 1,500 daily credits (3 Blogs). These will automatically refresh in 24 hours. To continue immediately with a higher limit, please upgrade.
               </p>
             </div>
             <button 
               onClick={() => setView('PRICING')}
               className="px-10 py-4 bg-white text-indigo-900 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-xl active:scale-95"
             >
-              Get Personal Credits
+              Unlock Pro Architect
             </button>
           </div>
         )}
@@ -213,10 +202,10 @@ const App: React.FC = () => {
                 <i className="fas fa-hourglass-half text-xl animate-bounce"></i>
              </div>
              <div>
-                <h4 className="font-bold text-amber-900 tracking-tight uppercase text-xs mb-1">Shared RPM Limit Active</h4>
+                <h4 className="font-bold text-amber-900 tracking-tight uppercase text-xs mb-1">Global Shared Rate Limit Active</h4>
                 <p className="text-amber-700 text-sm max-w-md">
-                   You have credits, but the **Global Shared Free Tier** is currently receiving >15 requests per minute. 
-                   Wait 45-60 seconds and try again.
+                   You have credits remaining, but the shared API is currently receiving {'>'} 15 requests per minute. 
+                   Wait 60 seconds and try again.
                 </p>
              </div>
              <button onClick={() => setStatus(GenerationStatus.IDLE)} className="text-xs font-bold text-amber-800 underline">Dismiss</button>
@@ -239,7 +228,7 @@ const App: React.FC = () => {
               </div>
               <div className="text-center">
                 <p className="text-slate-800 font-bold text-lg tracking-tight">Architecting Content...</p>
-                <p className="text-slate-500 text-xs">Estimated Cost: <span className="text-indigo-600 font-black">500 Credits</span></p>
+                <p className="text-slate-500 text-xs">Architect Cost: <span className="text-indigo-600 font-black">500 Credits</span></p>
               </div>
             </div>
           )}
