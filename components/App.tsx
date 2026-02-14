@@ -78,7 +78,7 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
               Awais <span className="text-indigo-600">Blog Architect</span>
-              <span className="ml-2 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase font-black">EEAT PRO v7.0</span>
+              <span className="ml-2 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase font-black">EEAT/AEO PRO v8.1</span>
             </h1>
           </div>
           <button 
@@ -93,11 +93,11 @@ const App: React.FC = () => {
       <main className="max-w-4xl mx-auto px-4 mt-12">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-            EEAT & <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Expert-Led</span> Content
+            EEAT & <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Niche-Adaptive</span> Content
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
             High-ranking blogs with verified scientific grounding, real-time search, 
-            and professional grade-9 green signal readability.
+            and snippet-optimized FAQs for the Answer Engine era.
           </p>
         </div>
 
@@ -144,7 +144,7 @@ const App: React.FC = () => {
               </div>
               <div className="text-center">
                 <p className="text-slate-800 font-bold text-lg">Architecting Expert Content...</p>
-                <p className="text-slate-500 text-sm">Grounding with research papers and industrial facts...</p>
+                <p className="text-slate-500 text-sm">Synthesizing niche-specific insights and AEO answers...</p>
               </div>
             </div>
           )}

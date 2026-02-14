@@ -37,30 +37,33 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
           <i className="fas fa-microchip text-2xl"></i>
           <h2 className="text-2xl font-black text-slate-800 tracking-tight">Architectural Inputs</h2>
         </div>
-        <span className="text-[10px] bg-slate-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest">MUM/BERT Optimized</span>
+        <div className="flex gap-2">
+            <span className="text-[9px] bg-green-100 text-green-700 px-3 py-1 rounded-full font-black uppercase tracking-widest">Readability: Grade 0-9</span>
+            <span className="text-[9px] bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-black uppercase tracking-widest">Max AI: 30%</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 uppercase">Topic / Headline</label>
+            <label className="text-xs font-bold text-slate-700 uppercase">Primary Topic / Headline</label>
             <input
               type="text"
               name="topic"
               value={inputs.topic}
               onChange={handleChange}
-              placeholder="The focus of your blog..."
+              placeholder="Requirement #1: Initialization Topic..."
               className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 uppercase">Primary Keyword</label>
+            <label className="text-xs font-bold text-slate-700 uppercase">Primary Keyword (NLP Focus)</label>
             <input
               type="text"
               name="primaryKeyword"
               value={inputs.primaryKeyword}
               onChange={handleChange}
-              placeholder="e.g. Luxury Interior Design"
+              placeholder="Requirement #5: Semantic Primary..."
               className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
@@ -68,18 +71,18 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-2">
-            <label className="text-xs font-bold text-slate-700 uppercase">Target Domain (Optional)</label>
+            <label className="text-xs font-bold text-slate-700 uppercase">Secondary Keywords (NLP Standards)</label>
             <input
-              type="url"
-              name="websiteUrl"
-              value={inputs.websiteUrl}
+              type="text"
+              name="secondaryKeywords"
+              value={inputs.secondaryKeywords}
               onChange={handleChange}
-              placeholder="https://yourbrand.com"
+              placeholder="keyword1, keyword2, keyword3..."
               className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 uppercase">Word Count</label>
+            <label className="text-xs font-bold text-slate-700 uppercase">Word Count Target</label>
             <input
               type="number"
               name="wordCount"
@@ -90,24 +93,35 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <label className="text-xs font-bold text-slate-700 uppercase">Expert Context (EEAT Parameters)</label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700 uppercase">Target Domain (for CTA Link)</label>
+            <input
+              type="url"
+              name="websiteUrl"
+              value={inputs.websiteUrl}
+              onChange={handleChange}
+              placeholder="https://yourbrand.com"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700 uppercase">Senior Specialist EEAT Context</label>
             <button 
               onClick={loadTemplate}
-              className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-tighter"
+              className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-tighter float-right"
             >
               <i className="fas fa-plus mr-1"></i> Load Template
             </button>
+            <textarea
+              name="businessDetails"
+              value={inputs.businessDetails}
+              onChange={handleChange}
+              rows={4}
+              placeholder="Anecdotal insights, niche expertise, brand tone..."
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all font-mono text-xs"
+            ></textarea>
           </div>
-          <textarea
-            name="businessDetails"
-            value={inputs.businessDetails}
-            onChange={handleChange}
-            rows={10}
-            placeholder="Paste your niche points here (Niche, Years of Experience, UVP, etc.)"
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all font-mono text-sm"
-          ></textarea>
         </div>
       </div>
 
@@ -118,7 +132,7 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
           isLoading ? 'bg-indigo-400 cursor-wait' : 'bg-slate-900 hover:bg-black active:scale-[0.98]'
         }`}
       >
-        {isLoading ? 'Architecting Expert Content...' : 'Generate Pro Humanized Content'}
+        {isLoading ? 'Architecting Senior SEO Content...' : 'Generate Pro Humanized Content'}
       </button>
     </div>
   );

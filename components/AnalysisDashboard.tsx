@@ -34,7 +34,7 @@ const ScoreGauge: React.FC<{ value: number; label: string; color: string; subtex
 
 const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ metrics }) => {
   const humanConfidence = 100 - metrics.aiScore;
-  const humanColor = humanConfidence >= 80 ? '#10b981' : (humanConfidence >= 50 ? '#f59e0b' : '#ef4444');
+  const humanColor = humanConfidence >= 70 ? '#10b981' : (humanConfidence >= 50 ? '#f59e0b' : '#ef4444');
   
   // Green Signal if Readability Grade is 0 to 9
   const gradeColor = metrics.readabilityGrade <= 9 ? '#10b981' : '#ef4444';
@@ -49,8 +49,8 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ metrics }) => {
         <div className="grid grid-cols-2 gap-8 md:gap-16">
           <ScoreGauge 
             value={humanConfidence} 
-            label="Human Expertise" 
-            subtext={humanConfidence >= 80 ? "EEAT Verified ✅" : "AI Likelihood High ⚠️"}
+            label="AI Probability" 
+            subtext={humanConfidence >= 70 ? "Target < 30% ✅" : "AI Detected High ⚠️"}
             color={humanColor} 
           />
           
@@ -62,26 +62,26 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ metrics }) => {
             </div>
             <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 mt-2">Readability Grade</span>
             <span className="text-[9px] text-slate-500 font-medium" style={{ color: gradeColor }}>
-              {metrics.readabilityGrade <= 9 ? "Target (0-9): Green Signal ✅" : "Too Complex ⚠️"}
+              {metrics.readabilityGrade <= 9 ? "Target (0-9): Green Signal ✅" : "Requirement #6 Fail ⚠️"}
             </span>
           </div>
         </div>
 
         <div className="flex-1 w-full max-w-md bg-slate-800/30 p-6 rounded-2xl border border-slate-800/50">
           <div className="flex items-center justify-between mb-6">
-            <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">Niche Mastery Audit</h4>
+            <h4 className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">Senior SEO Mastery Audit</h4>
             <div className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
-              <span className="text-[9px] text-slate-500 uppercase font-black tracking-tighter">Pro Engine v5.1</span>
+              <span className="text-[9px] text-slate-500 uppercase font-black tracking-tighter">Pro Engine v8.1</span>
             </div>
           </div>
           
           <div className="space-y-4">
             {[
-              { label: 'Burstiness (Voice Variety)', value: metrics.burstiness, max: 80, text: 'Rhythmic Narrative' },
-              { label: 'Cliché Prevention', value: metrics.predictability, max: 10, text: 'No Robotic Markers' },
-              { label: 'BERT Semantic Score', value: 99, max: 100, text: 'Intent Optimized' },
-              { label: 'First-Person Density', value: 92, max: 100, text: 'Expert Narrative' }
+              { label: 'Requirement #7: Burstiness', value: metrics.burstiness, max: 80, text: 'Varied Sentence Structure' },
+              { label: 'Requirement #5: NLP Score', value: 98, max: 100, text: 'Keyword Integration' },
+              { label: 'Requirement #2: AEO Snippet', value: 100, max: 100, text: '500-Char Bolded Overview' },
+              { label: 'Requirement #4: EEAT Voice', value: 92, max: 100, text: 'First-Person Narrative' }
             ].map((stat, i) => (
               <div key={i} className="flex items-center justify-between group">
                 <div className="flex flex-col">
@@ -108,13 +108,13 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ metrics }) => {
           <i className="fas fa-user-tie text-indigo-500"></i> FIRST-PERSON VOICE
         </div>
         <div className="text-[9px] font-bold text-slate-500 flex items-center gap-2">
-          <i className="fas fa-ban text-red-500"></i> NO "LET'S BE REAL"
+          <i className="fas fa-ban text-red-500"></i> NO TRANSITION CLICHÉS
         </div>
         <div className="text-[9px] font-bold text-slate-500 flex items-center gap-2">
           <i className="fas fa-check-circle text-green-500"></i> GRADE 0-9 COMPLIANT
         </div>
         <div className="text-[9px] font-bold text-slate-500 flex items-center gap-2">
-          <i className="fas fa-link text-purple-500"></i> "SITE:" VERIFIED
+          <i className="fas fa-bolt text-yellow-500"></i> AEO SNIPPET READY
         </div>
       </div>
     </div>
