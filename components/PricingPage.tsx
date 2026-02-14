@@ -21,9 +21,10 @@ const PricingPage: React.FC<PricingPageProps> = ({ onBack, onSelectPlan }) => {
       price: "19.99",
       model: "Standard",
       features: [
-        "50 Blogs per month",
+        "25,000 Private Credits",
+        "~50 High-Quality Blogs",
+        "Dedicated API Route",
         "Standard SEO Optimization",
-        "Grade 8 Readability Check",
         "Email Support"
       ]
     },
@@ -33,10 +34,10 @@ const PricingPage: React.FC<PricingPageProps> = ({ onBack, onSelectPlan }) => {
       model: "Flash v3.1",
       recommended: true,
       features: [
-        "500 Blogs per month",
+        "250,000 Private Credits",
+        "~500 Expert Blogs",
         "Google Search Grounding",
         "ZeroGPT Bypass Engine",
-        "Internal Link Automation",
         "Priority Generation Speed"
       ]
     },
@@ -45,8 +46,8 @@ const PricingPage: React.FC<PricingPageProps> = ({ onBack, onSelectPlan }) => {
       price: "99.00",
       model: "Pro v3.1",
       features: [
-        "Unlimited Generation",
-        "Highest Reasoning Quality",
+        "1,000,000 Private Credits",
+        "Unlimited Thinking Tokens",
         "Advanced AEO Grounding",
         "Custom Brand Voice Tuning",
         "24/7 Priority Support"
@@ -63,8 +64,8 @@ const PricingPage: React.FC<PricingPageProps> = ({ onBack, onSelectPlan }) => {
         >
           <i className="fas fa-arrow-left"></i> Back to Architect
         </button>
-        <h2 className="text-5xl font-black text-slate-900 mb-4 tracking-tight">Upgrade Your <span className="text-indigo-600">Architect</span> Plan</h2>
-        <p className="text-slate-500 text-lg max-w-xl mx-auto">The free tier has reached its limit. Choose a professional plan to continue building high-ranking content.</p>
+        <h2 className="text-5xl font-black text-slate-900 mb-4 tracking-tight">Upgrade Your <span className="text-indigo-600">Credits</span></h2>
+        <p className="text-slate-500 text-lg max-w-xl mx-auto">The free system energy is limited. Move to a private dedicated credit pool for professional volume.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -76,7 +77,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onBack, onSelectPlan }) => {
             }`}
           >
             {plan.recommended && (
-              <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">Most Popular</span>
+              <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">Best Value</span>
             )}
             <div className="mb-8">
               <h3 className="text-2xl font-black text-slate-800 mb-2">{plan.name}</h3>
@@ -104,7 +105,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onBack, onSelectPlan }) => {
                   : 'bg-slate-900 text-white hover:bg-slate-800'
               }`}
             >
-              Get Started
+              Unlock Credits
             </button>
           </div>
         ))}
@@ -117,7 +118,7 @@ const PricingPage: React.FC<PricingPageProps> = ({ onBack, onSelectPlan }) => {
           <i className="fab fa-cc-stripe text-3xl"></i>
           <i className="fab fa-cc-apple-pay text-3xl"></i>
         </div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Secure Bank-Level 256-bit Encryption</p>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Secure Payments via Stripe</p>
       </div>
     </div>
   );
