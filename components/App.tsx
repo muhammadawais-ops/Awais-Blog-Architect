@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BlogInputs, GeneratedBlog, GenerationStatus, ViewState } from '../types';
 import { generateSEOContent } from '../services/geminiService';
 import InputSection from './InputSection';
 import ResultSection from './ResultSection';
 import PricingPage from './PricingPage';
 import CheckoutModal from './CheckoutModal';
+
+const USAGE_KEY = 'awais_architect_usage';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('GENERATOR');
@@ -23,12 +25,43 @@ const App: React.FC = () => {
   const [generatedBlog, setGeneratedBlog] = useState<GeneratedBlog | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper to get usage data
+  const getUsageData = () => {
+    const data = localStorage.getItem(USAGE_KEY);
+    const today = new Date().toDateString();
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (parsed.date === today) {
+        return parsed;
+      }
+    }
+    return { count: 0, date: today };
+  };
+
+  // Helper to increment usage
+  const incrementUsage = () => {
+    const data = getUsageData();
+    data.count += 1;
+    localStorage.setItem(USAGE_KEY, JSON.stringify(data));
+  };
+
   const handleGenerate = async () => {
+    // 1. Check local daily limit (3 blogs per day)
+    const usage = getUsageData();
+    if (usage.count >= 3) {
+      setStatus(GenerationStatus.QUOTA_EXCEEDED);
+      return;
+    }
+
     setStatus(GenerationStatus.LOADING);
     setError(null);
     try {
       const result = await generateSEOContent(inputs);
       setGeneratedBlog(result);
+      
+      // 2. Success! Increment the local counter
+      incrementUsage();
+      
       setStatus(GenerationStatus.SUCCESS);
       setTimeout(() => {
         document.getElementById('result-area')?.scrollIntoView({ behavior: 'smooth' });
@@ -58,7 +91,9 @@ const App: React.FC = () => {
             plan={selectedPlan} 
             onClose={() => setView('PRICING')} 
             onSuccess={() => {
-              alert("Plan Upgraded. Originality.AI Limits Increased.");
+              // Reset local limit for paid users (simulated)
+              localStorage.setItem(USAGE_KEY, JSON.stringify({ count: 0, date: new Date().toDateString() }));
+              alert("Plan Upgraded. Your daily limit has been reset.");
               setView('GENERATOR');
               setStatus(GenerationStatus.IDLE);
             }}
@@ -99,6 +134,9 @@ const App: React.FC = () => {
             High-ranking blogs with verified scientific grounding, real-time search, 
             and snippet-optimized FAQs for the Answer Engine era.
           </p>
+          <p className="mt-2 text-sm font-bold text-indigo-500 uppercase tracking-widest">
+            Free Tier: {3 - getUsageData().count} Blogs remaining today
+          </p>
         </div>
 
         <InputSection 
@@ -114,9 +152,9 @@ const App: React.FC = () => {
               <i className="fas fa-crown text-3xl text-yellow-400"></i>
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase tracking-tight">Upgrade for Pro Grounding</h3>
+              <h3 className="text-2xl font-black uppercase tracking-tight">Daily Free Limit Reached</h3>
               <p className="text-indigo-200 text-sm max-w-md mx-auto">
-                You've hit the architectural limit. Pro plans include advanced EEAT grounding and 99% Originality.AI human scores.
+                You've utilized your 3 free blogs for today. To write unlimited blogs and unlock advanced EEAT grounding, please upgrade your plan.
               </p>
             </div>
             <button 
