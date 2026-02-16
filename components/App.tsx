@@ -31,14 +31,19 @@ const App: React.FC = () => {
         document.getElementById('result-area')?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     } catch (err: any) {
-      const errMsg = err.message || '';
-      if (errMsg.includes('429') || errMsg.includes('Quota')) {
-        setError("Google API Limit: System is busy with many users. Please wait 30-60 seconds and try again.");
-      } else if (errMsg.includes('configuration missing') || errMsg.includes('API_KEY')) {
-        setError("API Key Missing: Please ensure the API_KEY is set in Vercel environment variables.");
-      } else {
-        setError(errMsg || 'An unexpected error occurred during generation.');
+      console.error("API Error:", err);
+      // Showing detailed error to help the user identify key/quota issues
+      let detailedError = err.message || "An unknown error occurred.";
+      
+      if (detailedError.includes('429')) {
+        detailedError = "Google Quota Limit (429): Too many requests. Please wait 60 seconds. If this persists, your free key's daily limit might be over.";
+      } else if (detailedError.includes('403')) {
+        detailedError = "Permission Denied (403): Your API Key might be invalid or not enabled for Gemini 2.5.";
+      } else if (detailedError.includes('API_KEY')) {
+        detailedError = "Configuration Error: API_KEY not found in Vercel environment.";
       }
+
+      setError(detailedError);
       setStatus(GenerationStatus.ERROR);
     }
   };
@@ -56,8 +61,8 @@ const App: React.FC = () => {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline-block text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 px-3 py-1 rounded-full">
-              Community Access Edition
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 px-3 py-1 rounded-full">
+              Stable Build v2.5
             </span>
           </div>
         </div>
@@ -73,7 +78,7 @@ const App: React.FC = () => {
           </p>
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Engine Active (No Credits Required)</p>
+             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Optimized for Free API Tier</p>
           </div>
         </div>
 
@@ -85,10 +90,13 @@ const App: React.FC = () => {
         />
 
         {error && (
-          <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-2xl flex flex-col items-center text-center space-y-2 text-red-700 animate-fadeIn">
-            <i className="fas fa-exclamation-triangle text-2xl"></i>
-            <p className="font-bold">{error}</p>
-            <button onClick={() => setStatus(GenerationStatus.IDLE)} className="text-xs font-bold underline mt-2">Dismiss</button>
+          <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-2xl flex flex-col items-center text-center space-y-3 text-red-700 animate-fadeIn">
+            <i className="fas fa-exclamation-circle text-3xl"></i>
+            <div className="space-y-1">
+              <p className="font-bold text-sm">System Message:</p>
+              <p className="text-xs font-mono bg-white/50 p-2 rounded border border-red-100">{error}</p>
+            </div>
+            <button onClick={() => setStatus(GenerationStatus.IDLE)} className="text-xs font-bold underline text-red-800">Dismiss & Retry</button>
           </div>
         )}
 
@@ -101,7 +109,7 @@ const App: React.FC = () => {
               </div>
               <div className="text-center">
                 <p className="text-slate-800 font-bold text-lg tracking-tight">Architecting Professional Content...</p>
-                <p className="text-slate-500 text-xs">This may take up to 30 seconds for research & humanization.</p>
+                <p className="text-slate-500 text-xs italic">Optimizing single-pass generation to save API quota.</p>
               </div>
             </div>
           )}
