@@ -14,15 +14,15 @@ export interface GroundingSource {
 }
 
 export interface AnalysisMetrics {
-  aiScore: number; // Originality.AI Human Score
+  aiScore: number;
   readabilityGrade: number;
   adverbs: number;
   passiveVoice: number;
   complexPhrases: number;
   hardSentences: number;
   veryHardSentences: number;
-  burstiness: number; // Variance in sentence length
-  predictability: number; // Inverse of perplexity
+  burstiness: number;
+  predictability: number;
 }
 
 export interface GeneratedBlog {
@@ -37,9 +37,7 @@ export enum GenerationStatus {
   IDLE = 'IDLE',
   LOADING = 'LOADING',
   SUCCESS = 'SUCCESS',
-  ERROR = 'ERROR',
-  QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
-  SERVER_BUSY = 'SERVER_BUSY'
+  ERROR = 'ERROR'
 }
 
-export type ViewState = 'GENERATOR' | 'PRICING' | 'CHECKOUT';
+export type ViewState = 'GENERATOR';

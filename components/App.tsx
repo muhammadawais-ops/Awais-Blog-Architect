@@ -1,18 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
-import { BlogInputs, GeneratedBlog, GenerationStatus, ViewState } from '../types';
+import React, { useState } from 'react';
+import { BlogInputs, GeneratedBlog, GenerationStatus } from '../types';
 import { generateSEOContent } from '../services/geminiService';
 import InputSection from './InputSection';
 import ResultSection from './ResultSection';
-import PricingPage from './PricingPage';
-import CheckoutModal from './CheckoutModal';
-
-const USAGE_KEY = 'awais_architect_usage_v8_4';
 
 const App: React.FC = () => {
-  const [view, setView] = useState<ViewState>('GENERATOR');
-  const [selectedPlan, setSelectedPlan] = useState<{name: string, price: string} | null>(null);
-  const [isPaidUser, setIsPaidUser] = useState(false);
   const [inputs, setInputs] = useState<BlogInputs>({
     topic: '',
     primaryKeyword: '',
@@ -26,129 +19,46 @@ const App: React.FC = () => {
   const [generatedBlog, setGeneratedBlog] = useState<GeneratedBlog | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load usage and credits
-  const getUsageData = () => {
-    try {
-      const data = localStorage.getItem(USAGE_KEY);
-      const today = new Date().toDateString();
-      if (data) {
-        const parsed = JSON.parse(data);
-        if (parsed.date === today) return parsed;
-      }
-      return { count: 0, credits: 1500, date: today, type: 'FREE' };
-    } catch (e) {
-      return { count: 0, credits: 1500, date: new Date().toDateString(), type: 'FREE' };
-    }
-  };
-
-  const usage = getUsageData();
-  const currentCredits = usage.credits;
-  const totalLimit = isPaidUser ? 50000 : 1500;
-
   const handleGenerate = async () => {
-    if (currentCredits < 500 && !isPaidUser) {
-      setStatus(GenerationStatus.QUOTA_EXCEEDED);
-      return;
-    }
-
     setStatus(GenerationStatus.LOADING);
     setError(null);
     try {
       const result = await generateSEOContent(inputs);
       setGeneratedBlog(result);
-      
-      const cost = 500; 
-      const newData = {
-        ...usage,
-        count: usage.count + 1,
-        credits: Math.max(0, usage.credits - cost)
-      };
-      localStorage.setItem(USAGE_KEY, JSON.stringify(newData));
-      
       setStatus(GenerationStatus.SUCCESS);
+      
       setTimeout(() => {
         document.getElementById('result-area')?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     } catch (err: any) {
       const errMsg = err.message || '';
-      if (errMsg.includes('configuration missing') || errMsg.includes('API_KEY')) {
-        setError("System is currently in maintenance mode (Key not found). Please check back in a few minutes.");
-        setStatus(GenerationStatus.ERROR);
-      } else if (errMsg.includes('Quota') || errMsg.includes('429')) {
-        setStatus(GenerationStatus.SERVER_BUSY);
+      if (errMsg.includes('429') || errMsg.includes('Quota')) {
+        setError("Google API Limit: System is busy with many users. Please wait 30-60 seconds and try again.");
+      } else if (errMsg.includes('configuration missing') || errMsg.includes('API_KEY')) {
+        setError("API Key Missing: Please ensure the API_KEY is set in Vercel environment variables.");
       } else {
-        setError(errMsg || 'Architect encountered a structural error.');
-        setStatus(GenerationStatus.ERROR);
+        setError(errMsg || 'An unexpected error occurred during generation.');
       }
+      setStatus(GenerationStatus.ERROR);
     }
   };
 
-  if (view === 'PRICING' || view === 'CHECKOUT') {
-    return (
-      <div className="min-h-screen bg-slate-50 px-4">
-        <PricingPage 
-          onBack={() => setView('GENERATOR')} 
-          onSelectPlan={(plan) => {
-            setSelectedPlan(plan);
-            setView('CHECKOUT');
-          }}
-        />
-        {view === 'CHECKOUT' && selectedPlan && (
-          <CheckoutModal 
-            plan={selectedPlan} 
-            onClose={() => setView('PRICING')} 
-            onSuccess={() => {
-              const premiumData = { 
-                count: 0, 
-                credits: 50000, 
-                date: new Date().toDateString(), 
-                type: 'PRO' 
-              };
-              localStorage.setItem(USAGE_KEY, JSON.stringify(premiumData));
-              setIsPaidUser(true);
-              alert("Plan Upgraded! 50,000 Personal Credits Added.");
-              setView('GENERATOR');
-              setStatus(GenerationStatus.IDLE);
-            }}
-          />
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen pb-20 relative">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <div className="min-h-screen pb-20 relative bg-slate-50">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="bg-indigo-600 p-2 rounded-lg shadow-indigo-200 shadow-lg">
               <i className="fas fa-layer-group text-white text-xl"></i>
             </div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight hidden md:block">
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
               Awais <span className="text-indigo-600">Blog Architect</span>
             </h1>
           </div>
-
-          <div className="flex items-center space-x-2 md:space-x-4">
-            <div className="hidden sm:flex flex-col items-end leading-none border-r border-slate-100 pr-4">
-               <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Daily System Limit</span>
-               <span className="text-sm font-bold text-slate-500">{totalLimit.toLocaleString()}</span>
-            </div>
-
-            <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-xl shadow-sm">
-               <i className={`fas ${isPaidUser ? 'fa-bolt text-yellow-500' : 'fa-battery-half text-indigo-400'} text-xs`}></i>
-               <div className="flex flex-col leading-none">
-                  <span className="text-[9px] font-black text-indigo-700 uppercase tracking-tighter">Available Balance</span>
-                  <span className="text-sm font-black text-slate-900">{currentCredits.toLocaleString()}</span>
-               </div>
-            </div>
-
-            <button 
-              onClick={() => setView('PRICING')}
-              className="text-[10px] font-black text-indigo-600 border-2 border-indigo-100 px-4 py-2 rounded-xl hover:bg-indigo-50 transition-all uppercase tracking-widest"
-            >
-              {isPaidUser ? 'Account' : 'Upgrade'}
-            </button>
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:inline-block text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 px-3 py-1 rounded-full">
+              Community Access Edition
+            </span>
           </div>
         </div>
       </header>
@@ -161,9 +71,9 @@ const App: React.FC = () => {
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
             High-ranking blogs with verified scientific grounding and snippet-optimized FAQs.
           </p>
-          <div className="mt-4 inline-flex items-center gap-2 px-4 py-1 bg-slate-100 rounded-full border border-slate-200">
-             <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></div>
-             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Shared Global Tier (15 RPM Max)</p>
+          <div className="mt-4 inline-flex items-center gap-2 px-4 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
+             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Engine Active (No Credits Required)</p>
           </div>
         </div>
 
@@ -174,47 +84,11 @@ const App: React.FC = () => {
           isLoading={status === GenerationStatus.LOADING}
         />
 
-        {status === GenerationStatus.QUOTA_EXCEEDED && (
-          <div className="mt-8 p-8 bg-indigo-900 rounded-3xl text-white shadow-2xl animate-fadeIn border border-indigo-700 flex flex-col items-center text-center space-y-6">
-            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
-              <i className="fas fa-calendar-check text-3xl text-indigo-300"></i>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase tracking-tight">Daily Limit Reached</h3>
-              <p className="text-indigo-200 text-sm max-w-md mx-auto">
-                You've used your 1,500 daily credits (3 Blogs). These will automatically refresh in 24 hours. To continue immediately with a higher limit, please upgrade.
-              </p>
-            </div>
-            <button 
-              onClick={() => setView('PRICING')}
-              className="px-10 py-4 bg-white text-indigo-900 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-xl active:scale-95"
-            >
-              Unlock Pro Architect
-            </button>
-          </div>
-        )}
-
-        {status === GenerationStatus.SERVER_BUSY && (
-          <div className="mt-8 p-6 bg-amber-50 rounded-2xl border border-amber-200 flex flex-col items-center text-center space-y-4">
-             <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600">
-                <i className="fas fa-hourglass-half text-xl animate-bounce"></i>
-             </div>
-             <div>
-                <h4 className="font-bold text-amber-900 tracking-tight uppercase text-xs mb-1">Global Shared Rate Limit Active</h4>
-                <p className="text-amber-700 text-sm max-w-md">
-                   You have credits remaining, but the shared API is currently receiving &gt; 15 requests per minute. 
-                   Wait 60 seconds and try again.
-                </p>
-             </div>
-             <button onClick={() => setStatus(GenerationStatus.IDLE)} className="text-xs font-bold text-amber-800 underline">Dismiss</button>
-          </div>
-        )}
-
         {error && (
-          <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-2xl flex flex-col items-center text-center space-y-3 text-red-700">
+          <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-2xl flex flex-col items-center text-center space-y-2 text-red-700 animate-fadeIn">
             <i className="fas fa-exclamation-triangle text-2xl"></i>
-            <p className="font-bold text-sm">{error}</p>
-            <p className="text-xs opacity-75">Tip: Make sure API_KEY is set in Vercel settings and the app is redeployed.</p>
+            <p className="font-bold">{error}</p>
+            <button onClick={() => setStatus(GenerationStatus.IDLE)} className="text-xs font-bold underline mt-2">Dismiss</button>
           </div>
         )}
 
@@ -226,8 +100,8 @@ const App: React.FC = () => {
                 <i className="fas fa-pen-nib absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600"></i>
               </div>
               <div className="text-center">
-                <p className="text-slate-800 font-bold text-lg tracking-tight">Architecting Content...</p>
-                <p className="text-slate-500 text-xs">Architect Cost: <span className="text-indigo-600 font-black">500 Credits</span></p>
+                <p className="text-slate-800 font-bold text-lg tracking-tight">Architecting Professional Content...</p>
+                <p className="text-slate-500 text-xs">This may take up to 30 seconds for research & humanization.</p>
               </div>
             </div>
           )}
