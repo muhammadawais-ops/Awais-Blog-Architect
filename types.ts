@@ -14,15 +14,27 @@ export interface GroundingSource {
 }
 
 export interface AnalysisMetrics {
+  // AI Detection Parameters
   aiScore: number;
-  readabilityGrade: number;
-  adverbs: number;
-  passiveVoice: number;
-  complexPhrases: number;
+  perplexity: number;
+  burstiness: number;
+  syntacticComplexity: number;
+  semanticCoherence: number;
+  vocabularyDiversity: number;
+  entropy: number;
+  
+  // Readability Parameters
+  fleschScore: number;
+  fogIndex: number;
+  ariGrade: number;
+  avgSentenceLength: number;
+  passiveVoiceRatio: number;
+  complexWordPercentage: number;
+  adverbDensity: number;
   hardSentences: number;
   veryHardSentences: number;
-  burstiness: number;
-  predictability: number;
+  wordCount: number;
+  sentenceCount: number;
 }
 
 export interface GeneratedBlog {

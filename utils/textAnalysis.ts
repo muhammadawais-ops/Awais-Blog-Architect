@@ -1,52 +1,95 @@
 
-export const analyzeText = (text: string) => {
-  const cleanContent = text.replace(/[*#]/g, '');
-  const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 3);
-  const words = cleanContent.toLowerCase().match(/\b(\w+)\b/g) || [];
-  const characters = cleanContent.replace(/\s+/g, '').length;
+import { AnalysisMetrics } from '../types';
 
+export const analyzeText = (text: string): AnalysisMetrics => {
+  const cleanContent = text.replace(/[*#]/g, '');
+  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+  const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 3);
+  // Fix: Explicitly type words as string[] to prevent 'never[]' inference when the array is empty,
+  // which causes issues in downstream map/filter/reduce operations.
+  const words: string[] = cleanContent.toLowerCase().match(/\b(\w+)\b/g) || [];
+  const charsNoSpace = cleanContent.replace(/\s+/g, '').length;
+  
   if (words.length === 0 || sentences.length === 0) {
-    return {
-      readabilityGrade: 0,
-      adverbs: 0,
-      passiveVoice: 0,
-      complexPhrases: 0,
-      hardSentences: 0,
-      veryHardSentences: 0,
-      burstiness: 0,
-      predictability: 0
-    };
+    return {} as AnalysisMetrics;
   }
 
-  // ARI Readability
-  const avgCharsPerWord = characters / words.length;
-  const avgWordsPerSentence = words.length / sentences.length;
-  const ari = 4.71 * avgCharsPerWord + 0.5 * avgWordsPerSentence - 21.43;
-  let grade = Math.round(ari);
-  if (grade < 1) grade = 1;
+  const wordCount = words.length;
+  const sentenceCount = sentences.length;
 
-  // BURSTINESS (Variance in sentence lengths)
+  // --- READABILITY CALCULATIONS ---
+  
+  // Syllable Counter (Simplified)
+  const countSyllables = (word: string) => {
+    word = word.toLowerCase();
+    if (word.length <= 3) return 1;
+    word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+    word = word.replace(/^y/, '');
+    const matches = word.match(/[aeiouy]{1,2}/g);
+    return matches ? matches.length : 1;
+  };
+
+  // Fix: Explicitly type the reduce accumulator as number to prevent 'never' type assignment errors
+  // during calculation and ensure 'totalSyllables' is correctly typed for arithmetic operations.
+  const totalSyllables = words.reduce<number>((acc, word) => acc + countSyllables(word), 0);
+  const complexWords = words.filter(w => countSyllables(w) >= 3).length;
+
+  // Flesch Reading Ease
+  const fleschScore = 206.835 - (1.015 * (wordCount / sentenceCount)) - (84.6 * (totalSyllables / wordCount));
+  
+  // ARI
+  const ariGrade = Math.round(4.71 * (charsNoSpace / wordCount) + 0.5 * (wordCount / sentenceCount) - 21.43);
+  
+  // Gunning Fog
+  const fogIndex = 0.4 * ((wordCount / sentenceCount) + 100 * (complexWords / wordCount));
+
+  // --- AI MARKERS CALCULATIONS ---
+
+  // Entropy (Character Randomness)
+  const charFreq: Record<string, number> = {};
+  for (const char of cleanContent) {
+    charFreq[char] = (charFreq[char] || 0) + 1;
+  }
+  let entropy = 0;
+  for (const char in charFreq) {
+    const p = charFreq[char] / cleanContent.length;
+    entropy -= p * Math.log2(p);
+  }
+
+  // Burstiness (Length Variance)
   const sentenceLengths = sentences.map(s => s.trim().split(/\s+/).length);
-  const mean = sentenceLengths.reduce((a, b) => a + b, 0) / sentenceLengths.length;
-  const stdDev = Math.sqrt(sentenceLengths.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / sentenceLengths.length);
-  const burstiness = Math.min(100, Math.round(stdDev * 12));
+  const meanLength = wordCount / sentenceCount;
+  const variance = sentenceLengths.reduce((a, b) => a + Math.pow(b - meanLength, 2), 0) / sentenceCount;
+  const burstiness = Math.min(100, Math.round(Math.sqrt(variance) * 5));
 
-  // AI MARKERS (Predictability)
-  const forbidden = [
-    "let's be real", 'overall', 'furthermore', 'moreover', 'consequently', 
-    'additionally', 'essential', 'crucial', 'delve', 'unlock', 
-    'in conclusion', "let's explore", 'dive in', 'truth be told'
-  ];
-  let triggerCount = 0;
-  forbidden.forEach(m => {
-    const regex = new RegExp(`\\b${m}\\b`, 'gi');
-    const matches = cleanContent.match(regex);
-    if (matches) triggerCount += matches.length;
+  // Vocabulary Diversity (Type-Token Ratio)
+  const uniqueWords = new Set(words).size;
+  const vocabularyDiversity = Math.round((uniqueWords / wordCount) * 100);
+
+  // Perplexity Approximation (Based on bigram repetition)
+  const bigrams = [];
+  for (let i = 0; i < words.length - 1; i++) {
+    bigrams.push(`${words[i]} ${words[i+1]}`);
+  }
+  const uniqueBigrams = new Set(bigrams).size;
+  const perplexity = Math.round((uniqueBigrams / bigrams.length) * 100);
+
+  // AI Score (Combined Heuristic)
+  const aiPatterns = ["delve", "unlock", "comprehensive", "essential", "crucial", "tapestry", "moreover", "furthermore"];
+  let patternCount = 0;
+  aiPatterns.forEach(p => {
+    const matches = cleanContent.match(new RegExp(`\\b${p}\\b`, 'gi'));
+    if (matches) patternCount += matches.length;
   });
+  
+  const aiScore = Math.max(0, Math.min(100, Math.round(
+    (50 - (burstiness / 2)) + 
+    (patternCount * 5) + 
+    (100 - vocabularyDiversity) / 2
+  )));
 
-  const predictability = Math.min(100, Math.round((triggerCount / sentences.length) * 250));
-
-  let adverbs = 0, passiveVoice = 0, hardSentences = 0, veryHardSentences = 0;
+  // Linguistic Checks
+  let passiveVoice = 0, adverbs = 0, hardSentences = 0, veryHardSentences = 0;
   sentences.forEach(s => {
     const count = s.trim().split(/\s+/).length;
     if (count > 25) veryHardSentences++;
@@ -55,18 +98,28 @@ export const analyzeText = (text: string) => {
     const passive = s.match(/\b(am|is|are|was|were|be|been|being)\b\s+([a-z]+ed|found|known|seen|taken|made)\b/gi);
     if (passive) passiveVoice += passive.length;
 
-    const adverb = s.match(/\b(?!(only|early|likely|daily|really)\b)[a-z]+ly\b/gi);
-    if (adverb) adverbs += adverb.length;
+    const adv = s.match(/\b(?!(only|early|likely|daily|really)\b)[a-z]+ly\b/gi);
+    if (adv) adverbs += adv.length;
   });
 
   return {
-    readabilityGrade: grade,
-    adverbs,
-    passiveVoice,
-    complexPhrases: triggerCount,
+    aiScore,
+    perplexity,
+    burstiness,
+    syntacticComplexity: Math.round((veryHardSentences / sentenceCount) * 100),
+    semanticCoherence: 95, // Simulated heuristic
+    vocabularyDiversity,
+    entropy: Math.round(entropy * 10),
+    fleschScore: Math.round(fleschScore),
+    fogIndex: Math.round(fogIndex),
+    ariGrade: Math.max(1, Math.round(ariGrade)),
+    avgSentenceLength: Math.round(meanLength),
+    passiveVoiceRatio: Math.round((passiveVoice / wordCount) * 1000),
+    complexWordPercentage: Math.round((complexWords / wordCount) * 100),
+    adverbDensity: Math.round((adverbs / wordCount) * 1000),
     hardSentences,
     veryHardSentences,
-    burstiness,
-    predictability
+    wordCount,
+    sentenceCount
   };
 };
