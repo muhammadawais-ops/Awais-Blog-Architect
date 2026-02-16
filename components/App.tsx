@@ -54,8 +54,8 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="hidden md:flex items-center gap-2">
-            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest border border-indigo-100 bg-indigo-50 px-3 py-1 rounded-full">
-              Engine: Gemini 3 Elite Flash
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 bg-slate-50 px-3 py-1 rounded-full">
+              System Active
             </span>
           </div>
         </div>
@@ -76,7 +76,9 @@ const App: React.FC = () => {
              </p>
              <div className="mt-4 inline-flex items-center gap-3 px-6 py-2 bg-white rounded-full border border-slate-200 shadow-sm">
                 <div className="flex -space-x-2">
-                   {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full bg-slate-200 border-2 border-white"></div>)}
+                   <img className="w-6 h-6 rounded-full border-2 border-white object-cover" src="https://i.pravatar.cc/100?u=awais1" alt="User 1" />
+                   <img className="w-6 h-6 rounded-full border-2 border-white object-cover" src="https://i.pravatar.cc/100?u=awais2" alt="User 2" />
+                   <img className="w-6 h-6 rounded-full border-2 border-white object-cover" src="https://i.pravatar.cc/100?u=awais3" alt="User 3" />
                 </div>
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Used by 500+ Content Strategists</p>
              </div>
