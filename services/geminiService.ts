@@ -4,7 +4,13 @@ import { BlogInputs, GeneratedBlog, GroundingSource } from "../types";
 import { analyzeText } from "../utils/textAnalysis";
 
 export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedBlog> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey || apiKey === "undefined" || apiKey === "") {
+    throw new Error("API configuration missing. Please set API_KEY in environment variables.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const systemInstruction = `
     You are a Senior SEO Content Specialist and Subject Matter Expert. Your goal is to produce high-ranking, human-centric content that bypasses AI detectors and prioritizes user experience (UX).

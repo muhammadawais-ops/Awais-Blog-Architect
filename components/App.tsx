@@ -7,7 +7,7 @@ import ResultSection from './ResultSection';
 import PricingPage from './PricingPage';
 import CheckoutModal from './CheckoutModal';
 
-const USAGE_KEY = 'awais_architect_usage_v8_3';
+const USAGE_KEY = 'awais_architect_usage_v8_4';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('GENERATOR');
@@ -35,7 +35,6 @@ const App: React.FC = () => {
         const parsed = JSON.parse(data);
         if (parsed.date === today) return parsed;
       }
-      // Default for Free Tier: 1500 Credits (Each blog = 500, Total = 3 blogs)
       return { count: 0, credits: 1500, date: today, type: 'FREE' };
     } catch (e) {
       return { count: 0, credits: 1500, date: new Date().toDateString(), type: 'FREE' };
@@ -47,7 +46,6 @@ const App: React.FC = () => {
   const totalLimit = isPaidUser ? 50000 : 1500;
 
   const handleGenerate = async () => {
-    // Check if tokens/credits are enough
     if (currentCredits < 500 && !isPaidUser) {
       setStatus(GenerationStatus.QUOTA_EXCEEDED);
       return;
@@ -59,7 +57,6 @@ const App: React.FC = () => {
       const result = await generateSEOContent(inputs);
       setGeneratedBlog(result);
       
-      // Success! Deduct Credits
       const cost = 500; 
       const newData = {
         ...usage,
@@ -74,7 +71,10 @@ const App: React.FC = () => {
       }, 100);
     } catch (err: any) {
       const errMsg = err.message || '';
-      if (errMsg.includes('Quota') || errMsg.includes('429')) {
+      if (errMsg.includes('configuration missing') || errMsg.includes('API_KEY')) {
+        setError("System is currently in maintenance mode (Key not found). Please check back in a few minutes.");
+        setStatus(GenerationStatus.ERROR);
+      } else if (errMsg.includes('Quota') || errMsg.includes('429')) {
         setStatus(GenerationStatus.SERVER_BUSY);
       } else {
         setError(errMsg || 'Architect encountered a structural error.');
@@ -130,17 +130,15 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2 md:space-x-4">
-            {/* Total Daily Limit Label */}
             <div className="hidden sm:flex flex-col items-end leading-none border-r border-slate-100 pr-4">
-               <span className="text-[9px] font-black text-slate-400 uppercase">Daily System Limit</span>
+               <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Daily System Limit</span>
                <span className="text-sm font-bold text-slate-500">{totalLimit.toLocaleString()}</span>
             </div>
 
-            {/* Available Balance (The Real-Time Counter) */}
             <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-xl shadow-sm">
                <i className={`fas ${isPaidUser ? 'fa-bolt text-yellow-500' : 'fa-battery-half text-indigo-400'} text-xs`}></i>
                <div className="flex flex-col leading-none">
-                  <span className="text-[9px] font-black text-indigo-700 uppercase">Available Balance</span>
+                  <span className="text-[9px] font-black text-indigo-700 uppercase tracking-tighter">Available Balance</span>
                   <span className="text-sm font-black text-slate-900">{currentCredits.toLocaleString()}</span>
                </div>
             </div>
@@ -204,7 +202,7 @@ const App: React.FC = () => {
              <div>
                 <h4 className="font-bold text-amber-900 tracking-tight uppercase text-xs mb-1">Global Shared Rate Limit Active</h4>
                 <p className="text-amber-700 text-sm max-w-md">
-                   You have credits remaining, but the shared API is currently receiving {'>'} 15 requests per minute. 
+                   You have credits remaining, but the shared API is currently receiving &gt; 15 requests per minute. 
                    Wait 60 seconds and try again.
                 </p>
              </div>
@@ -213,9 +211,10 @@ const App: React.FC = () => {
         )}
 
         {error && (
-          <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-3 text-red-700">
-            <i className="fas fa-exclamation-circle"></i>
-            <p className="font-medium text-sm">{error}</p>
+          <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-2xl flex flex-col items-center text-center space-y-3 text-red-700">
+            <i className="fas fa-exclamation-triangle text-2xl"></i>
+            <p className="font-bold text-sm">{error}</p>
+            <p className="text-xs opacity-75">Tip: Make sure API_KEY is set in Vercel settings and the app is redeployed.</p>
           </div>
         )}
 
