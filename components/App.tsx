@@ -31,19 +31,20 @@ const App: React.FC = () => {
         document.getElementById('result-area')?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     } catch (err: any) {
-      console.error("API Error:", err);
-      // Showing detailed error to help the user identify key/quota issues
-      let detailedError = err.message || "An unknown error occurred.";
+      console.error("Generation Error:", err);
+      let message = "An unexpected error occurred.";
       
-      if (detailedError.includes('429')) {
-        detailedError = "Google Quota Limit (429): Too many requests. Please wait 60 seconds. If this persists, your free key's daily limit might be over.";
-      } else if (detailedError.includes('403')) {
-        detailedError = "Permission Denied (403): Your API Key might be invalid or not enabled for Gemini 2.5.";
-      } else if (detailedError.includes('API_KEY')) {
-        detailedError = "Configuration Error: API_KEY not found in Vercel environment.";
+      if (err.message === "API_KEY_MISSING") {
+        message = "Configuration Error: API_KEY is not set in environment variables.";
+      } else if (err.status === 404 || err.message?.includes('404')) {
+        message = "Model Not Found (404): The selected Gemini model is currently unavailable in your region or is being updated by Google. Please try again in a few minutes.";
+      } else if (err.status === 429 || err.message?.includes('429')) {
+        message = "Rate Limit Reached (429): Google's free tier allows 15 requests/min. Please wait 60 seconds.";
+      } else {
+        message = err.message || "Failed to generate content. Please check your API key and connection.";
       }
 
-      setError(detailedError);
+      setError(message);
       setStatus(GenerationStatus.ERROR);
     }
   };
@@ -62,7 +63,7 @@ const App: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 px-3 py-1 rounded-full">
-              Stable Build v2.5
+              Stable Build v3.0
             </span>
           </div>
         </div>
@@ -78,7 +79,7 @@ const App: React.FC = () => {
           </p>
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Optimized for Free API Tier</p>
+             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Connected to Gemini 3 Engine</p>
           </div>
         </div>
 
@@ -90,13 +91,20 @@ const App: React.FC = () => {
         />
 
         {error && (
-          <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-2xl flex flex-col items-center text-center space-y-3 text-red-700 animate-fadeIn">
-            <i className="fas fa-exclamation-circle text-3xl"></i>
-            <div className="space-y-1">
-              <p className="font-bold text-sm">System Message:</p>
-              <p className="text-xs font-mono bg-white/50 p-2 rounded border border-red-100">{error}</p>
+          <div className="mt-8 p-8 bg-white border-2 border-red-100 rounded-3xl flex flex-col items-center text-center space-y-4 shadow-xl animate-fadeIn">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center">
+              <i className="fas fa-exclamation-triangle text-2xl text-red-500"></i>
             </div>
-            <button onClick={() => setStatus(GenerationStatus.IDLE)} className="text-xs font-bold underline text-red-800">Dismiss & Retry</button>
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-slate-900">Oops! Something went wrong</h3>
+              <p className="text-sm text-slate-600 leading-relaxed max-w-md">{error}</p>
+            </div>
+            <button 
+              onClick={() => setStatus(GenerationStatus.IDLE)} 
+              className="px-6 py-2 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-black transition-all"
+            >
+              Dismiss & Try Again
+            </button>
           </div>
         )}
 
@@ -109,7 +117,7 @@ const App: React.FC = () => {
               </div>
               <div className="text-center">
                 <p className="text-slate-800 font-bold text-lg tracking-tight">Architecting Professional Content...</p>
-                <p className="text-slate-500 text-xs italic">Optimizing single-pass generation to save API quota.</p>
+                <p className="text-slate-500 text-xs italic">Using Gemini 3 Flash for maximum speed and accuracy.</p>
               </div>
             </div>
           )}
