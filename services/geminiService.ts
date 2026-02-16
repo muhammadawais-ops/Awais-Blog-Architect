@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { BlogInputs, GeneratedBlog } from "../types";
+import { BlogInputs, GeneratedBlog, GroundingSource } from "../types";
 import { analyzeText } from "../utils/textAnalysis";
 
 export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedBlog> => {
@@ -12,73 +12,62 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
 
   const ai = new GoogleGenAI({ apiKey });
   
-  const systemInstruction = `You are a Senior Specialist and Subject Matter Expert. 
+  const systemInstruction = `You are a Senior Specialist and Subject Matter Expert with real-time research capabilities. 
   Your background and professional niche are strictly defined by the "EEAT Context" provided by the user. 
   
+  RESEARCH & CITATION RULE (CRITICAL):
+  - Use Google Search to find real-time data, statistics, and insights from renowned, high-authority websites (e.g., Forbes, Harvard Business Review, Statista, specialized industry leaders).
+  - INTEGRATE EXTERNAL LINKS: Naturally cite these sources within the content using Markdown links [Source Name](URL). 
+  - Ensure links are placed on relevant keywords or statistics to provide maximum value and authority.
+  - DO NOT make up URLs. Only use the ones found during the search.
+
   READABILITY RULE (STRICT):
   - Target Readability: Grade 7 to Grade 9.
   - Sentence Structure: Short and punchy. No long, academic, or corporate jargon.
   - Active Voice: Use active voice 90% of the time.
 
   KEYWORD STRATEGY (LOCKED):
-  - PRIMARY KEYWORD: "${inputs.primaryKeyword}" must be naturally integrated into:
-    1. The Meta Title (near the start).
-    2. The Meta Description.
-    3. The H1 Headline.
-    4. The first paragraph of the Introduction.
-    5. Integrated naturally 3-4 times in body content.
-    6. The Conclusion/Final Insight section.
-  - SECONDARY KEYWORDS: "${inputs.secondaryKeywords}" must use Semantic SEO and NLP best practices.
+  - PRIMARY KEYWORD: "${inputs.primaryKeyword}" must be naturally integrated into Title, Meta, H1, first para, body, and Conclusion.
+  - SECONDARY KEYWORDS: "${inputs.secondaryKeywords}" must use Semantic SEO.
 
   CONTENT STRUCTURE RULES (NON-NEGOTIABLE):
   1. H1 TITLE: Catchy, personal, includes primary keyword.
   2. AI OVERVIEW: BOLDED paragraph (~500 characters) immediately after H1. Direct answer to the search intent.
   3. INTRODUCTION HEADING: Use "## Introduction:".
-  4. BODY: Use H2, H3, H4, and H5 hierarchically. Short paragraphs.
-  5. ORGANIC FORMATTING: Bold key phrases within sentences.
-  6. FINAL INSIGHT HEADING: DO NOT use the word "Ending" or "Conclusion". Instead, generate a short, valuable, and powerful heading that summarizes the expert's final wisdom (e.g., "The Bottom Line," "My Parting Advice," or niche-specific wisdom).
-  7. PROFESSIONAL BRIDGE (CTA): DO NOT use the word "CTA" or "Call to Action". Create a natural, non-salesy heading that invites the reader to explore more on ${inputs.websiteUrl} (e.g., "Ready to Take the Next Step?", "Where We Go From Here," or "Deepen Your Expertise").
+  4. BODY: Use H2, H3, H4, and H5 hierarchically. Short paragraphs citing authoritative data.
+  5. ORGANIC FORMATTING: Bold key phrases.
+  6. FINAL INSIGHT HEADING: Professional dynamic heading (Unique & Professional).
+  7. PROFESSIONAL BRIDGE (CTA): Professional dynamic bridge to ${inputs.websiteUrl}.
   8. FAQs: 3-5 questions with blunt, exact answers.
-
-  TONE & STYLE:
-  - Conversational, personal, and mentor-like. 
-  - Adopt the persona from the EEAT context completely.
-  - Strictly avoid AI-isms like 'delve', 'tapestry', 'unlock', 'comprehensive'.
 
   USER-PROVIDED EEAT CONTEXT:
   ${inputs.businessDetails || "Senior SEO Content Strategist with 20 years of experience."}`;
 
   const prompt = `
-    TASK: Write a master-level blog post following the EEAT persona and the Grade 9 readability limit.
+    TASK: Write a master-level blog post using real-time search data to cite authoritative sources.
     TOPIC: ${inputs.topic}
     PRIMARY KEYWORD: ${inputs.primaryKeyword}
     SECONDARY KEYWORDS: ${inputs.secondaryKeywords}
     TARGET LENGTH: ${inputs.wordCount} words
 
-    MANDATORY SEQUENCE:
-    1. H1 Title
-    2. Bolded AI Overview (~500 chars)
-    3. ## Introduction:
-    4. Narrative Body (H2-H5)
-    5. Dynamic Final Insight Heading (Unique & Professional)
-    6. Dynamic Bridge/CTA Heading (Non-salesy)
-    7. FAQs
+    MANDATORY: Cite at least 2-3 renowned external websites with direct links in the content to prove authenticity.
 
     OUTPUT FORMAT: Return ONLY valid JSON.
     {
       "metaTitle": "Title including primary keyword",
       "metaDescription": "Description including primary keyword",
-      "content": "Full markdown content with Grade 9 readability and professional dynamic headings",
+      "content": "Full markdown content with Grade 9 readability, professional dynamic headings, and authoritative external links",
       "humanConfidence": 99
     }
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-pro-preview", // Upgraded for better tool usage and reasoning
       contents: prompt,
       config: {
         systemInstruction,
+        tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -90,7 +79,7 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
           },
           required: ["metaTitle", "metaDescription", "content", "humanConfidence"]
         },
-        temperature: 0.9,
+        temperature: 0.85,
       },
     });
 
@@ -100,11 +89,20 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
     const data = JSON.parse(text);
     const textMetrics = analyzeText(data.content || "");
 
+    // Extract grounding sources if available
+    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    const sources: GroundingSource[] = groundingChunks
+      .filter(chunk => chunk.web && chunk.web.uri)
+      .map(chunk => ({
+        title: chunk.web.title || "Reference Source",
+        uri: chunk.web.uri
+      }));
+
     return {
       content: data.content,
       metaTitle: data.metaTitle,
       metaDescription: data.metaDescription,
-      sources: [],
+      sources,
       metrics: textMetrics
     };
   } catch (error: any) {

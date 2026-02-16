@@ -19,6 +19,11 @@ const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
 
   const renderer = new marked.Renderer();
   
+  // Custom link renderer to ensure links open in new tab and look professional
+  renderer.link = ({ href, title, text }) => {
+    return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 font-bold underline hover:text-indigo-800 transition-colors">${text}</a>`;
+  };
+
   const parsedHtml = useMemo(() => {
     const cleanContent = blog.content.replace(/^#\s*/, '# ');
     return marked.parse(cleanContent, { renderer });
@@ -58,12 +63,37 @@ const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
         </div>
       </div>
 
+      {/* Sources Section (If any) */}
+      {blog.sources && blog.sources.length > 0 && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <i className="fas fa-search-nodes text-indigo-600"></i>
+            <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">Authoritative Sources Cited</h4>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {blog.sources.map((source, idx) => (
+              <a 
+                key={idx} 
+                href={source.uri} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:border-indigo-400 hover:text-indigo-600 transition-all shadow-sm"
+              >
+                <i className="fas fa-link text-[10px] opacity-50"></i>
+                {source.title.length > 40 ? source.title.substring(0, 40) + '...' : source.title}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Main Content Area */}
       <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
         <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40">
           <div className="flex flex-wrap gap-2">
             <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded">EEAT VERIFIED</span>
             <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded">HUMAN-OPTIMIZED</span>
+            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded">RESEARCH-BACKED</span>
           </div>
           <button
             onClick={() => copyToClipboard(blog.content, 'content')}
