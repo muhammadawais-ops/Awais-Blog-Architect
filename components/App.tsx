@@ -28,20 +28,25 @@ const App: React.FC = () => {
       setStatus(GenerationStatus.SUCCESS);
       
       setTimeout(() => {
-        document.getElementById('result-area')?.scrollIntoView({ behavior: 'smooth' });
+        const el = document.getElementById('result-area');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     } catch (err: any) {
-      console.error("Generation Error:", err);
+      console.error("Generation Error Details:", err);
       let message = "An unexpected error occurred.";
       
+      const errorString = (JSON.stringify(err) + (err.message || "")).toLowerCase();
+      
       if (err.message === "API_KEY_MISSING") {
-        message = "Configuration Error: API_KEY is not set in environment variables.";
-      } else if (err.status === 404 || err.message?.includes('404')) {
-        message = "Model Not Found (404): The selected Gemini model is currently unavailable in your region or is being updated by Google. Please try again in a few minutes.";
-      } else if (err.status === 429 || err.message?.includes('429')) {
-        message = "Rate Limit Reached (429): Google's free tier allows 15 requests/min. Please wait 60 seconds.";
+        message = "Configuration Error: API_KEY is missing. Check your deployment environment.";
+      } else if (errorString.includes('429')) {
+        message = "Pro Engine Quota (429): Gemini 2.5 Pro has a smaller rate limit on the free tier (2 requests/min). Please wait 30-60 seconds before trying again.";
+      } else if (errorString.includes('404')) {
+        message = "Model Not Available (404): Gemini 2.5 Pro might be restricted in your region or project tier. Check your Google AI Studio console.";
+      } else if (errorString.includes('quota')) {
+        message = "Daily Limit Reached: You have exhausted your Gemini 2.5 Pro daily quota.";
       } else {
-        message = err.message || "Failed to generate content. Please check your API key and connection.";
+        message = err.message || "Failed to generate content. Verify connection and API key.";
       }
 
       setError(message);
@@ -54,16 +59,16 @@ const App: React.FC = () => {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="bg-indigo-600 p-2 rounded-lg shadow-indigo-200 shadow-lg">
-              <i className="fas fa-layer-group text-white text-xl"></i>
+            <div className="bg-indigo-700 p-2 rounded-lg shadow-indigo-200 shadow-lg">
+              <i className="fas fa-brain text-white text-xl"></i>
             </div>
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Awais <span className="text-indigo-600">Blog Architect</span>
+              Awais <span className="text-indigo-700">Pro Architect</span>
             </h1>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 px-3 py-1 rounded-full">
-              Stable Build v3.0
+              Engine: 2.5 Pro Preview
             </span>
           </div>
         </div>
@@ -71,15 +76,15 @@ const App: React.FC = () => {
 
       <main className="max-w-4xl mx-auto px-4 mt-12">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
-            EEAT & <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Niche-Adaptive</span> Content
+          <h2 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight leading-tight">
+            Advanced <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 to-purple-700">Pro-Level</span> Reasoning
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            High-ranking blogs with verified scientific grounding and snippet-optimized FAQs.
+            Leveraging Gemini 2.5 Pro for linguistic depth and high-complexity SEO architectural patterns.
           </p>
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-1 bg-white rounded-full border border-slate-200 shadow-sm">
-             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Connected to Gemini 3 Engine</p>
+             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
+             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Connected to 2.5 Pro Engine</p>
           </div>
         </div>
 
@@ -93,17 +98,17 @@ const App: React.FC = () => {
         {error && (
           <div className="mt-8 p-8 bg-white border-2 border-red-100 rounded-3xl flex flex-col items-center text-center space-y-4 shadow-xl animate-fadeIn">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center">
-              <i className="fas fa-exclamation-triangle text-2xl text-red-500"></i>
+              <i className="fas fa-exclamation-circle text-2xl text-red-500"></i>
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-bold text-slate-900">Oops! Something went wrong</h3>
+              <h3 className="text-lg font-bold text-slate-900">Engine Throttling</h3>
               <p className="text-sm text-slate-600 leading-relaxed max-w-md">{error}</p>
             </div>
             <button 
               onClick={() => setStatus(GenerationStatus.IDLE)} 
-              className="px-6 py-2 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-black transition-all"
+              className="px-8 py-3 bg-slate-900 text-white rounded-full text-sm font-bold hover:bg-black transition-all shadow-lg active:scale-95"
             >
-              Dismiss & Try Again
+              Wait & Retry
             </button>
           </div>
         )}
@@ -112,12 +117,12 @@ const App: React.FC = () => {
           {status === GenerationStatus.LOADING && (
             <div className="flex flex-col items-center justify-center space-y-4 py-20">
               <div className="relative">
-                <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-                <i className="fas fa-pen-nib absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600"></i>
+                <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-700 rounded-full animate-spin"></div>
+                <i className="fas fa-cog absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-700 animate-pulse"></i>
               </div>
               <div className="text-center">
-                <p className="text-slate-800 font-bold text-lg tracking-tight">Architecting Professional Content...</p>
-                <p className="text-slate-500 text-xs italic">Using Gemini 3 Flash for maximum speed and accuracy.</p>
+                <p className="text-slate-800 font-bold text-lg tracking-tight">Reasoning with 2.5 Pro...</p>
+                <p className="text-slate-500 text-xs italic">Crafting deep semantic structures. This may take a moment.</p>
               </div>
             </div>
           )}

@@ -10,35 +10,39 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
     throw new Error("API_KEY_MISSING");
   }
 
-  // Initializing the AI client as per the latest @google/genai standards
+  // Initialize the AI client using the Pro model requested by the user
   const ai = new GoogleGenAI({ apiKey });
   
-  const systemInstruction = `You are an elite SEO Content Architect. 
-  Your task is to generate a high-authority blog post that sounds 100% human.
-  Requirements:
-  1. Voice: First-person ("I", "my", "we").
-  2. Structure: Start with a bolded AEO (Answer Engine Optimization) summary. Use clear H2 and H3 tags.
-  3. Style: Conversational but professional. No "AI-speak" (avoid words like 'moreover', 'delve', 'unlocking').
-  4. Accuracy: Use factual, experience-based insights.`;
+  const systemInstruction = `You are a Senior Content Architect & SEO Strategist. 
+  Your specialty is Gemini 2.5 Pro reasoning to craft deep, human-sounding content.
+  EEAT Guidelines:
+  - Voice: Natural First-Person ("I have found", "In my experience").
+  - Structure: Start with an AEO-ready bolded paragraph (the 'Answer').
+  - Vocabulary: Varied, avoiding repetitive AI connectors.
+  - Accuracy: Grounded in logical expertise.`;
 
   const prompt = `
     TOPIC: ${inputs.topic}
     PRIMARY KEYWORD: ${inputs.primaryKeyword}
     SECONDARY KEYWORDS: ${inputs.secondaryKeywords}
-    TARGET WORD COUNT: ${inputs.wordCount}
-    EEAT CONTEXT: ${inputs.businessDetails}
-    BRAND URL: ${inputs.websiteUrl}
+    WORD COUNT GOAL: ${inputs.wordCount} words
+    BUSINESS CONTEXT: ${inputs.businessDetails}
+    URL REFERENCE: ${inputs.websiteUrl}
 
-    Format the response strictly as a JSON object with these fields:
-    - metaTitle (SEO optimized)
-    - metaDescription (Snippet ready)
-    - content (The full blog in Markdown)
-    - humanConfidence (integer 0-100)
+    REQUIREMENT: Produce a complete, high-authority blog post.
+    
+    Output Format (JSON):
+    {
+      "metaTitle": "Catchy, SEO-optimized title",
+      "metaDescription": "Snippet-ready description",
+      "content": "Full blog in Markdown format",
+      "humanConfidence": 98
+    }
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview", // Updated to the recommended stable preview model
+      model: "gemini-2.5-pro-preview-01-2025",
       contents: prompt,
       config: {
         systemInstruction,
@@ -53,7 +57,7 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
           },
           required: ["metaTitle", "metaDescription", "content", "humanConfidence"]
         },
-        temperature: 0.8,
+        temperature: 0.9,
       },
     });
 
@@ -74,7 +78,7 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
       }
     };
   } catch (error: any) {
-    console.error("Gemini Service Error:", error);
+    console.error("Gemini Pro API Error:", error);
     throw error;
   }
 };
