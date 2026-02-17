@@ -32,7 +32,7 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
 
   CONTENT STRUCTURE RULES (NON-NEGOTIABLE):
   1. H1 TITLE: Catchy, personal, includes primary keyword.
-  2. AI OVERVIEW: BOLDED paragraph (~500 characters) immediately after H1. Direct answer to the search intent.
+  2. **AI OVERVIEW (CRITICAL)**: The very first paragraph after H1 must be **BOLDED**. It MUST be a blunt, direct, and simple answer to the user's main query or topic. No fluff, no "In this blog...", no filler. Just the direct answer in extremely clear language. (~300-500 characters).
   3. INTRODUCTION HEADING: Use "## Introduction:".
   4. BODY: Use H2, H3, H4, and H5 hierarchically. Short paragraphs citing authoritative data.
   5. ORGANIC FORMATTING: Bold key phrases.
@@ -50,20 +50,22 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
     SECONDARY KEYWORDS: ${inputs.secondaryKeywords}
     TARGET LENGTH: ${inputs.wordCount} words
 
-    MANDATORY: Cite at least 2-3 renowned external websites with direct links in the content to prove authenticity.
+    MANDATORY: 
+    - The first bolded paragraph MUST be the direct, no-nonsense answer to "${inputs.topic}".
+    - Cite at least 2-3 renowned external websites with direct links in the content to prove authenticity.
 
     OUTPUT FORMAT: Return ONLY valid JSON.
     {
       "metaTitle": "Title including primary keyword",
       "metaDescription": "Description including primary keyword",
-      "content": "Full markdown content with Grade 9 readability, professional dynamic headings, and authoritative external links",
+      "content": "Full markdown content with Grade 9 readability, professional dynamic headings, authoritative external links, and a direct bolded answer at the start",
       "humanConfidence": 99
     }
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview", // Upgraded for better tool usage and reasoning
+      model: "gemini-3-pro-preview",
       contents: prompt,
       config: {
         systemInstruction,
@@ -89,7 +91,6 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
     const data = JSON.parse(text);
     const textMetrics = analyzeText(data.content || "");
 
-    // Extract grounding sources if available
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const sources: GroundingSource[] = groundingChunks
       .filter(chunk => chunk.web && chunk.web.uri)
