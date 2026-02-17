@@ -19,9 +19,25 @@ const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
 
   const renderer = new marked.Renderer();
   
-  // Custom link renderer to ensure links open in new tab and look professional
-  renderer.link = ({ href, title, text }) => {
-    return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 font-bold underline hover:text-indigo-800 transition-colors">${text}</a>`;
+  // Using 'any' for the parameter to bypass TypeScript build errors regarding the signature
+  // which can vary between different versions of marked during the build process.
+  renderer.link = (tokenOrHref: any) => {
+    let href = '';
+    let title = '';
+    let text = '';
+
+    if (typeof tokenOrHref === 'string') {
+      // Positional arguments (Older marked versions)
+      href = tokenOrHref;
+      // In positional, title and text would be the 2nd and 3rd arguments
+    } else {
+      // Token object (Modern marked versions)
+      href = tokenOrHref.href || '';
+      title = tokenOrHref.title || '';
+      text = tokenOrHref.text || '';
+    }
+
+    return `<a href="${href}" title="${title}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 font-bold underline hover:text-indigo-800 transition-colors">${text}</a>`;
   };
 
   const parsedHtml = useMemo(() => {

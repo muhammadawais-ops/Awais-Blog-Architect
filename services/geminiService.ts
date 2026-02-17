@@ -92,12 +92,17 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
     const textMetrics = analyzeText(data.content || "");
 
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const sources: GroundingSource[] = groundingChunks
-      .filter(chunk => chunk.web && chunk.web.uri)
-      .map(chunk => ({
-        title: chunk.web.title || "Reference Source",
-        uri: chunk.web.uri
-      }));
+    const sources: GroundingSource[] = [];
+    
+    // Using a for-of loop to handle null checks and satisfy TypeScript's strict checks
+    for (const chunk of groundingChunks) {
+      if (chunk.web && chunk.web.uri) {
+        sources.push({
+          title: chunk.web.title || "Reference Source",
+          uri: chunk.web.uri as string
+        });
+      }
+    }
 
     return {
       content: data.content,
