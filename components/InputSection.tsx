@@ -52,7 +52,7 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
               name="topic"
               value={inputs.topic}
               onChange={handleChange}
-              placeholder="Requirement #1: Initialization Topic..."
+              placeholder="Initialization Topic"
               className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
@@ -63,7 +63,7 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
               name="primaryKeyword"
               value={inputs.primaryKeyword}
               onChange={handleChange}
-              placeholder="Requirement #5: Semantic Primary..."
+              placeholder="Primary Keyword"
               className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
