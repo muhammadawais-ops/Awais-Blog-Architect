@@ -12,10 +12,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Health check route
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", environment: process.env.NODE_ENV || "development" });
+});
+
 // API Route for Content Generation (Local)
 app.post("/api/generate", async (req, res) => {
-  // Use the same handler as Vercel for consistency
-  return generateHandler(req as any, res as any);
+  try {
+    // Use the same handler as Vercel for consistency
+    await generateHandler(req as any, res as any);
+  } catch (error: any) {
+    console.error("Local Server Error:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message || "Internal Server Error" });
+    }
+  }
 });
 
 // Serve static files

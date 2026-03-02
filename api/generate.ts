@@ -8,7 +8,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { inputs } = req.body;
+  const { inputs } = req.body || {};
+  
+  if (!inputs) {
+    return res.status(400).json({ error: "Request body is missing required 'inputs' object." });
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
@@ -140,7 +145,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const textMetrics = analyzeText(finalContent);
+    let textMetrics = {} as any;
+    try {
+      textMetrics = analyzeText(finalContent);
+    } catch (e) {
+      console.error("Text Analysis Error:", e);
+    }
+
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     
     for (const chunk of groundingChunks) {
