@@ -75,17 +75,20 @@ export const analyzeText = (text: string): AnalysisMetrics => {
   const perplexity = Math.round((uniqueBigrams / bigrams.length) * 100);
 
   // AI Score (Combined Heuristic)
-  const aiPatterns = ["delve", "unlock", "comprehensive", "essential", "crucial", "tapestry", "moreover", "furthermore"];
+  const aiPatterns = ["delve", "unlock", "comprehensive", "essential", "crucial", "tapestry", "moreover", "furthermore", "in conclusion", "it is important to note"];
   let patternCount = 0;
   aiPatterns.forEach(p => {
     const matches = cleanContent.match(new RegExp(`\\b${p}\\b`, 'gi'));
     if (matches) patternCount += matches.length;
   });
   
+  // Refined AI Score: Lower is more Human, Higher is more AI
+  // We reduce the base weights significantly to be more lenient as per user feedback
+  // Lowering baseline from 25 to 15 and reducing multipliers
   const aiScore = Math.max(0, Math.min(100, Math.round(
-    (50 - (burstiness / 2)) + 
-    (patternCount * 5) + 
-    (100 - vocabularyDiversity) / 2
+    (15 - (burstiness / 4)) + 
+    (patternCount * 1.5) + 
+    (100 - vocabularyDiversity) / 5
   )));
 
   // Linguistic Checks

@@ -20,8 +20,11 @@ const MetricCard: React.FC<{ label: string; value: string | number; sub: string;
 );
 
 const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ metrics }) => {
-  const humanConfidence = 100 - metrics.aiScore;
   const isOptimal = metrics.ariGrade <= 9;
+  const humanScore = 100 - metrics.aiScore;
+  
+  // Dynamic color based on AI Score (Lower is better/greener)
+  const aiColorClass = metrics.aiScore > 60 ? 'text-rose-400' : metrics.aiScore > 30 ? 'text-amber-400' : 'text-emerald-400';
 
   return (
     <div className="bg-slate-950 text-white rounded-[2.5rem] p-8 md:p-12 shadow-3xl mb-12 border border-slate-800 relative overflow-hidden">
@@ -40,8 +43,9 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ metrics }) => {
           </div>
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <p className="text-4xl font-black text-emerald-400">{humanConfidence}%</p>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Human Authenticity</p>
+              <p className={`text-4xl font-black ${aiColorClass}`}>{metrics.aiScore}%</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">AI Score</p>
+              <p className="text-[8px] text-slate-400 mt-1 font-bold italic">Human: {humanScore}%</p>
             </div>
             <div className="w-px h-12 bg-slate-800"></div>
             <div className="text-center">

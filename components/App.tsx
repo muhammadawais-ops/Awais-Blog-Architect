@@ -5,6 +5,15 @@ import { generateSEOContent } from '../services/geminiService';
 import InputSection from './InputSection';
 import ResultSection from './ResultSection';
 
+declare global {
+  interface Window {
+    aistudio: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}
+
 const App: React.FC = () => {
   const [inputs, setInputs] = useState<BlogInputs>({
     topic: '',
@@ -18,10 +27,13 @@ const App: React.FC = () => {
   const [status, setStatus] = useState<GenerationStatus>(GenerationStatus.IDLE);
   const [generatedBlog, setGeneratedBlog] = useState<GeneratedBlog | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showKeySelector, setShowKeySelector] = useState(false);
 
   const handleGenerate = async () => {
     setStatus(GenerationStatus.LOADING);
     setError(null);
+    setShowKeySelector(false);
+
     try {
       const result = await generateSEOContent(inputs);
       setGeneratedBlog(result);
@@ -33,8 +45,23 @@ const App: React.FC = () => {
       }, 100);
     } catch (err: any) {
       console.error("Architect Error:", err);
+      if (err.message === "API_KEY_MISSING") {
+        setShowKeySelector(true);
+      }
       setError(err.message || "Failed to generate content.");
       setStatus(GenerationStatus.ERROR);
+    }
+  };
+
+  const handleSelectKey = async () => {
+    try {
+      await window.aistudio.openSelectKey();
+      // After selecting, we assume success and try again or just let the user click generate
+      setShowKeySelector(false);
+      setError(null);
+      setStatus(GenerationStatus.IDLE);
+    } catch (err) {
+      console.error("Key selection error:", err);
     }
   };
 
@@ -96,8 +123,31 @@ const App: React.FC = () => {
           <div className="mt-8 p-8 bg-white border border-red-200 rounded-3xl flex flex-col items-center text-center space-y-4 shadow-xl">
             <i className="fas fa-circle-exclamation text-4xl text-red-500"></i>
             <h3 className="text-lg font-bold text-slate-900">Architect Notice</h3>
-            <p className="text-sm text-slate-600 max-w-md">{error}</p>
-            <button onClick={() => setStatus(GenerationStatus.IDLE)} className="px-6 py-2 bg-slate-900 text-white rounded-full font-bold text-sm">Retry Session</button>
+            <p className="text-sm text-slate-600 max-w-md">
+              {error === "API_KEY_MISSING" 
+                ? "A valid Gemini API Key is required to access the high-end reasoning models. Please select a key from a paid Google Cloud project."
+                : error}
+            </p>
+            {showKeySelector ? (
+              <div className="flex flex-col items-center gap-4">
+                <button 
+                  onClick={handleSelectKey} 
+                  className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-black text-sm shadow-lg transition-all active:scale-95"
+                >
+                  Select API Key
+                </button>
+                <a 
+                  href="https://ai.google.dev/gemini-api/docs/billing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-slate-400 hover:text-indigo-600 underline font-bold uppercase tracking-widest"
+                >
+                  Learn about billing
+                </a>
+              </div>
+            ) : (
+              <button onClick={() => setStatus(GenerationStatus.IDLE)} className="px-6 py-2 bg-slate-900 text-white rounded-full font-bold text-sm">Retry Session</button>
+            )}
           </div>
         )}
 

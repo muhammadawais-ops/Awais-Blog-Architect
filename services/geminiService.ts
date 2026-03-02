@@ -2,6 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { BlogInputs, GeneratedBlog, GroundingSource } from "../types";
 import { analyzeText } from "../utils/textAnalysis";
+import { EEAT_GUIDELINES } from "./eeatGuidelines";
 
 export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedBlog> => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -12,41 +13,24 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
 
   const ai = new GoogleGenAI({ apiKey });
   
-  const systemInstruction = `You are a Senior Specialist and Subject Matter Expert with real-time research capabilities. 
-  Your background, professional voice, and niche authority are strictly defined by the "EEAT Context" provided below. 
+  const systemInstruction = `
+  ${EEAT_GUIDELINES}
 
-  EEAT & PERSONAL BRANDING RULE (CRITICAL):
-  - You MUST adopt the persona described in the EEAT Context. 
-  - Weave specific experiences, anecdotal insights, and the unique perspective of the business owner into the narrative.
-  - The content should not just be informative; it must feel like it was written by a veteran with "skin in the game."
-  - Show, don't just tell, the Expertise, Authoritativeness, and Trustworthiness.
+  ADDITIONAL CONTEXT & RULES:
+  - EEAT Context: ${inputs.businessDetails || "Senior SEO Content Strategist with 20 years of experience."}
+  - Target Website: ${inputs.websiteUrl}
   
-  LANGUAGE & ENGAGEMENT RULE (STRICT):
-  - Language: Use simple, clear, and conversational English. Avoid complex jargon. It must be accessible to a layman while remaining valuable to an expert.
-  - Tone: Interactive, engaging, and empathetic. Use "You" and "I" to create a connection.
-  - Pain Points: Start the blog by immediately addressing the reader's specific pain points related to the topic. Make them feel understood.
-
-  RESEARCH & LINKING RULE (CRITICAL):
-  - EXTERNAL LINKS: Use Google Search to find real-time data, statistics, and insights from high-authority sites (Forbes, HBR, industry leaders). Cite them naturally [Source Name](URL).
-  - INTERNAL LINKING BEST PRACTICES (MANDATORY): Use Google Search to find 3-8 relevant pages or blog posts from the user's website: ${inputs.websiteUrl}.
-    - Search Query: "site:${inputs.websiteUrl} ${inputs.topic}"
-    - STRATEGY:
-      1. Descriptive Anchor Text: Use descriptive phrases that tell users and search engines what the target page is about. NEVER use "click here" or "read more."
-      2. Relevance: Only link to pages contextually related to the current section.
-      3. Priority Placement: Place at least one internal link high up in the introduction or first H2 section.
-      4. Silo Structure: Link to pillar pages or relevant cluster topics to strengthen topical authority.
-      5. Balance: Aim for 3-8 internal links per 1,000 words.
-      6. Dofollow: Ensure links are standard Markdown links to pass authority.
-  - DO NOT make up URLs. Only use the ones found during the search.
-
-  READABILITY RULE (STRICT):
-  - Target Readability: Grade 7 to Grade 9.
-  - Sentence Structure: Short and punchy. No long, academic, or corporate jargon.
-  - Active Voice: Use active voice 90% of the time.
-
-  KEYWORD STRATEGY (LOCKED):
-  - PRIMARY KEYWORD: "${inputs.primaryKeyword}" must be naturally integrated into Title, Meta, H1, first para, body, and Conclusion.
-  - SECONDARY KEYWORDS: "${inputs.secondaryKeywords}" must use Semantic SEO.
+  LANGUAGE & ENGAGEMENT (STRICT):
+  - Language: Use extremely simple, clear, and conversational English (Grade 3-4 level).
+  - Pain Points: Start by immediately addressing the reader's specific pain points.
+  
+  RESEARCH & LINKING (CRITICAL):
+  - EXTERNAL LINKS: Use placeholders like [[EXT_1]], [[EXT_2]] in text. Provide mapping in "externalCitations" JSON field.
+  - INTERNAL LINKS: Search for 2-3 relevant pages from ${inputs.websiteUrl} using "site:${inputs.websiteUrl} ${inputs.topic}".
+  
+  KEYWORD STRATEGY:
+  - PRIMARY KEYWORD: "${inputs.primaryKeyword}" (Title, Meta, H1, Intro, Body, Conclusion).
+  - SECONDARY KEYWORDS: "${inputs.secondaryKeywords}" (Semantic SEO).
 
   CONTENT STRUCTURE RULES (NON-NEGOTIABLE):
   1. H1 TITLE: Catchy, personal, includes primary keyword.
@@ -54,36 +38,41 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
   3. INTRODUCTION HEADING: Use "## Introduction:". Start by addressing the reader's pain points.
   4. BODY: Use H2, H3, H4, and H5 hierarchically. Short paragraphs citing authoritative data.
   5. ORGANIC FORMATTING: Bold key phrases.
-  6. CONCLUSION HEADING: Use a professional, dynamic heading for the conclusion (e.g., "## Final Verdict:", "## The Bottom Line:", "## Conclusion:"). Summarize the key takeaways.
-  7. CALL TO ACTION HEADING: Use a clear heading for the CTA (e.g., "## Ready to Level Up?", "## Take Action Now:"). Provide a professional bridge and link to ${inputs.websiteUrl}.
+  6. FINAL INSIGHT HEADING: Professional dynamic heading (Unique & Professional).
+  7. PROFESSIONAL BRIDGE (CTA): Professional dynamic bridge to ${inputs.websiteUrl}.
   8. FAQs: 3-5 questions with blunt, exact answers.
-
-  USER-PROVIDED EEAT CONTEXT (USE THIS TO SHAPE THE VOICE):
-  ${inputs.businessDetails || "Senior SEO Content Strategist with 20 years of experience."}`;
+  `;
 
   const prompt = `
     TASK: Write a master-level blog post that is simple, engaging, and authoritative.
     TOPIC: ${inputs.topic}
     PRIMARY KEYWORD: ${inputs.primaryKeyword}
     SECONDARY KEYWORDS: ${inputs.secondaryKeywords}
-    TARGET LENGTH: ${inputs.wordCount} words
+    TARGET LENGTH: ${inputs.wordCount} words (STRICTLY MATCH THIS WORD COUNT)
     TARGET WEBSITE: ${inputs.websiteUrl}
+    
+    CITATION SYSTEM (CRITICAL):
+    1. Use Google Search to find 3-4 high-authority external sources (Forbes, Wikipedia, HBR, etc.).
+    2. In the "content" field, DO NOT write the full markdown link. Instead, use placeholders like [[EXT_1]], [[EXT_2]], [[EXT_3]], [[EXT_4]].
+    3. Place these placeholders naturally within the sentences where the information is cited.
+    4. In the "externalCitations" field of the JSON, provide the details for each placeholder.
 
     MANDATORY REQUIREMENTS: 
     - START WITH PAIN POINTS: The introduction must immediately resonate with the reader's struggles.
-    - SIMPLE LANGUAGE: Write so a 12-year-old can understand, but an expert finds it insightful.
-    - EXTERNAL LINKS: Cite 2-3 high-authority external sources with direct links.
-    - INTERNAL LINKS (ELITE STRATEGY): Search for and include 3-8 relevant internal links from ${inputs.websiteUrl}. Use descriptive anchor text, prioritize high placement, and follow a silo/cluster logic.
+    - SIMPLE LANGUAGE: Write so an 8-year-old (3rd/4th grade) can understand perfectly.
     - BOLDED ANSWER: The first paragraph after H1 must be a bolded, direct answer to the topic.
     - DEEP EEAT INTEGRATION: Use the provided EEAT Context to inject authority and a unique professional voice.
     - INTERACTIVE: Use rhetorical questions and engaging transitions.
-    - CONCLUSION & CTA: End with a dedicated "Conclusion" section and a "Call to Action" section, both with clear, professional headings.
 
     OUTPUT FORMAT: Return ONLY valid JSON.
     {
       "metaTitle": "Title including primary keyword",
       "metaDescription": "Description including primary keyword",
-      "content": "Full markdown content with Grade 9 readability, professional dynamic headings, authoritative external links, and a direct bolded answer at the start",
+      "content": "Full markdown content. Use placeholders like [[EXT_1]] for external links.",
+      "externalCitations": [
+        { "placeholder": "[[EXT_1]]", "siteName": "Forbes", "url": "https://forbes.com/..." },
+        { "placeholder": "[[EXT_2]]", "siteName": "Wikipedia", "url": "https://en.wikipedia.org/..." }
+      ],
       "humanConfidence": 99
     }
   `;
@@ -102,9 +91,21 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
             metaTitle: { type: Type.STRING },
             metaDescription: { type: Type.STRING },
             content: { type: Type.STRING },
+            externalCitations: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  placeholder: { type: Type.STRING },
+                  siteName: { type: Type.STRING },
+                  url: { type: Type.STRING }
+                },
+                required: ["placeholder", "siteName", "url"]
+              }
+            },
             humanConfidence: { type: Type.INTEGER }
           },
-          required: ["metaTitle", "metaDescription", "content", "humanConfidence"]
+          required: ["metaTitle", "metaDescription", "content", "externalCitations", "humanConfidence"]
         },
         temperature: 0.85,
       },
@@ -114,23 +115,47 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
     if (!text) throw new Error("EMPTY_RESPONSE");
 
     const data = JSON.parse(text);
-    const textMetrics = analyzeText(data.content || "");
+    
+    // Inject Citations into content
+    let finalContent = data.content || "";
+    const sources: GroundingSource[] = [];
+
+    if (data.externalCitations && Array.isArray(data.externalCitations)) {
+      data.externalCitations.forEach((citation: any) => {
+        if (citation.placeholder && citation.url) {
+          const markdownLink = `[${citation.siteName || "Source"}](${citation.url})`;
+          // Replace all occurrences of the placeholder
+          finalContent = finalContent.split(citation.placeholder).join(markdownLink);
+          
+          // Add to sources list if not already there
+          if (!sources.find(s => s.uri === citation.url)) {
+            sources.push({
+              title: citation.siteName || "Reference Source",
+              uri: citation.url
+            });
+          }
+        }
+      });
+    }
+
+    const textMetrics = analyzeText(finalContent);
 
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const sources: GroundingSource[] = [];
     
-    // Using a for-of loop to handle null checks and satisfy TypeScript's strict checks
+    // Add grounding chunks to sources if they aren't already included
     for (const chunk of groundingChunks) {
       if (chunk.web && chunk.web.uri) {
-        sources.push({
-          title: chunk.web.title || "Reference Source",
-          uri: chunk.web.uri as string
-        });
+        if (!sources.find(s => s.uri === chunk.web?.uri)) {
+          sources.push({
+            title: chunk.web.title || "Reference Source",
+            uri: chunk.web.uri as string
+          });
+        }
       }
     }
 
     return {
-      content: data.content,
+      content: finalContent,
       metaTitle: data.metaTitle,
       metaDescription: data.metaDescription,
       sources,
