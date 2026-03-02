@@ -154,7 +154,20 @@ const App: React.FC = () => {
                 </a>
               </div>
             ) : (
-              <button onClick={() => setStatus(GenerationStatus.IDLE)} className="px-6 py-2 bg-slate-900 text-white rounded-full font-bold text-sm">Retry Session</button>
+              <div className="flex flex-col items-center gap-4">
+                <button 
+                  onClick={handleGenerate} 
+                  className="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-black text-sm shadow-lg transition-all active:scale-95"
+                >
+                  Try Again Now
+                </button>
+                <button 
+                  onClick={() => setStatus(GenerationStatus.IDLE)} 
+                  className="text-[10px] text-slate-400 hover:text-slate-600 font-bold uppercase tracking-widest"
+                >
+                  Reset Session
+                </button>
+              </div>
             )}
           </div>
         )}

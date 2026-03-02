@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { EEAT_GUIDELINES } from "../services/eeatGuidelines";
 import { analyzeText } from "../utils/textAnalysis";
 
@@ -14,10 +14,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "Request body is missing required 'inputs' object." });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    return res.status(500).json({ error: "GEMINI_API_KEY is missing on the server. Please check Vercel environment variables." });
+    console.error(`[${new Date().toISOString()}] CRITICAL: No API Key found in process.env.API_KEY or process.env.GEMINI_API_KEY`);
+    return res.status(500).json({ error: "API_KEY_MISSING" });
   }
 
   try {
@@ -100,6 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           systemInstruction,
           tools: [{ googleSearch: {} }],
           responseMimeType: "application/json",
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           responseSchema: {
             type: Type.OBJECT,
             properties: {
@@ -135,6 +137,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         config: {
           systemInstruction,
           responseMimeType: "application/json",
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           responseSchema: {
             type: Type.OBJECT,
             properties: {
