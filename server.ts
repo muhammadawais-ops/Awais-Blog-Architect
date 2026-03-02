@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import generateHandler from "./api/generate";
+import generateHandler from "./api/generate.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,10 +20,9 @@ app.get("/api/health", (req, res) => {
 // API Route for Content Generation (Local)
 app.post("/api/generate", async (req, res) => {
   try {
-    // Use the same handler as Vercel for consistency
     await generateHandler(req as any, res as any);
   } catch (error: any) {
-    console.error("Local Server Error:", error);
+    console.error("Server Error:", error);
     if (!res.headersSent) {
       res.status(500).json({ error: error.message || "Internal Server Error" });
     }
@@ -51,13 +50,11 @@ if (process.env.NODE_ENV === "production") {
   setupDev();
 }
 
-// Only listen if not on Vercel
-if (process.env.VERCEL !== "1") {
-  const PORT = 3000;
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
+// Start server
+const PORT = 3000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
+});
 
 export default app;
 
