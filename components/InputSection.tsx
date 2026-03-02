@@ -7,11 +7,9 @@ interface InputSectionProps {
   setInputs: (inputs: BlogInputs) => void;
   onGenerate: () => void;
   isLoading: boolean;
-  fastMode: boolean;
-  setFastMode: (fastMode: boolean) => void;
 }
 
-const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenerate, isLoading, fastMode, setFastMode }) => {
+const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenerate, isLoading }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setInputs({ ...inputs, [name]: name === 'wordCount' ? parseInt(value) || 0 : value });
@@ -127,43 +125,15 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-6 border-t border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center h-5">
-            <input
-              id="fast-mode"
-              name="fast-mode"
-              type="checkbox"
-              checked={fastMode}
-              onChange={(e) => setFastMode(e.target.checked)}
-              className="focus:ring-indigo-500 h-5 w-5 text-indigo-600 border-slate-300 rounded cursor-pointer transition-all"
-            />
-          </div>
-          <div className="ml-1 text-sm">
-            <label htmlFor="fast-mode" className="font-black text-slate-700 cursor-pointer uppercase tracking-tight">Fast Mode (No Research)</label>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Skips live web research for 2x faster generation.</p>
-          </div>
-        </div>
-        <button
-          onClick={onGenerate}
-          disabled={isLoading || !inputs.topic}
-          className={`px-10 py-5 rounded-2xl font-black text-lg text-white shadow-2xl transition-all flex items-center gap-3 ${
-            isLoading ? 'bg-indigo-400 cursor-wait' : 'bg-slate-900 hover:bg-black active:scale-[0.98]'
-          }`}
-        >
-          {isLoading ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              Architecting...
-            </>
-          ) : (
-            <>
-              <i className="fas fa-magic"></i>
-              Generate Pro Content
-            </>
-          )}
-        </button>
-      </div>
+      <button
+        onClick={onGenerate}
+        disabled={isLoading || !inputs.topic}
+        className={`w-full py-5 rounded-2xl font-black text-lg text-white shadow-2xl transition-all ${
+          isLoading ? 'bg-indigo-400 cursor-wait' : 'bg-slate-900 hover:bg-black active:scale-[0.98]'
+        }`}
+      >
+        {isLoading ? 'Architecting Senior SEO Content...' : 'Generate Pro Humanized Content'}
+      </button>
     </div>
   );
 };

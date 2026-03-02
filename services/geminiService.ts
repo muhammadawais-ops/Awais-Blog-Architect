@@ -1,13 +1,13 @@
 import { BlogInputs, GeneratedBlog } from "../types";
 
-export const generateSEOContent = async (inputs: BlogInputs, fastMode: boolean = false): Promise<GeneratedBlog> => {
+export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedBlog> => {
   try {
     const response = await fetch("/api/generate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ inputs, fastMode }),
+      body: JSON.stringify({ inputs }),
     });
 
     if (!response.ok) {

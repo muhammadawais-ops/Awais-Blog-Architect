@@ -8,7 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { inputs, fastMode } = req.body || {};
+  const { inputs } = req.body || {};
   
   if (!inputs) {
     return res.status(400).json({ error: "Request body is missing required 'inputs' object." });
@@ -94,15 +94,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     let response;
     try {
-      const tools = fastMode ? [] : [{ googleSearch: {} }];
-      console.log(`[${new Date().toISOString()}] Calling Gemini API (FastMode: ${fastMode})...`);
-      
       response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
           systemInstruction,
-          tools,
+          tools: [{ googleSearch: {} }],
           responseMimeType: "application/json",
           thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           responseSchema: {
