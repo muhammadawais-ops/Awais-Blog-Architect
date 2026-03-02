@@ -8,6 +8,20 @@ import generateHandler from "./api/generate";
 const app = express();
 const PORT = 3000;
 
+// Listen immediately to signal readiness to the platform
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server listening on http://0.0.0.0:${PORT}`);
+});
+
+// Process Error Handling
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 app.use(cors());
 app.use(express.json());
 
@@ -28,8 +42,7 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
-async function startServer() {
-  // Serve static files or setup Vite
+async function setupVite() {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const distPath = path.join(__dirname, "dist");
@@ -41,22 +54,22 @@ async function startServer() {
       res.sendFile(path.join(distPath, "index.html"));
     });
   } else {
-    const { createServer: createViteServer } = await import("vite");
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
+    try {
+      const { createServer: createViteServer } = await import("vite");
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+      console.log("Vite middleware loaded");
+    } catch (e) {
+      console.error("Failed to load Vite middleware:", e);
+    }
   }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-  });
 }
 
-startServer().catch(err => {
-  console.error("Failed to start server:", err);
-  process.exit(1);
+setupVite().catch(err => {
+  console.error("Failed to setup Vite:", err);
 });
 
 export default app;
