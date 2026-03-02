@@ -25,6 +25,7 @@ const App: React.FC = () => {
   });
 
   const [status, setStatus] = useState<GenerationStatus>(GenerationStatus.IDLE);
+  const [fastMode, setFastMode] = useState(false);
   const [generatedBlog, setGeneratedBlog] = useState<GeneratedBlog | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showKeySelector, setShowKeySelector] = useState(false);
@@ -35,7 +36,7 @@ const App: React.FC = () => {
     setShowKeySelector(false);
 
     try {
-      const result = await generateSEOContent(inputs);
+      const result = await generateSEOContent(inputs, fastMode);
       setGeneratedBlog(result);
       setStatus(GenerationStatus.SUCCESS);
       
@@ -125,6 +126,8 @@ const App: React.FC = () => {
           setInputs={setInputs} 
           onGenerate={handleGenerate} 
           isLoading={status === GenerationStatus.LOADING}
+          fastMode={fastMode}
+          setFastMode={setFastMode}
         />
 
         {error && (
