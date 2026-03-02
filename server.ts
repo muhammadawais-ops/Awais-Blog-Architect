@@ -1,10 +1,15 @@
 
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import { EEAT_GUIDELINES } from "./services/eeatGuidelines";
 import { analyzeText } from "./utils/textAnalysis";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
@@ -13,12 +18,18 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
+  // Health check route
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok" });
+  });
+
   // API Route for Content Generation
   app.post("/api/generate", async (req, res) => {
     const { inputs } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
+      console.error("GEMINI_API_KEY is missing in environment variables.");
       return res.status(500).json({ error: "GEMINI_API_KEY is missing on the server." });
     }
 
@@ -184,15 +195,22 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     // Serve static files in production
-    app.use(express.static("dist"));
+    const distPath = path.join(__dirname, "dist");
+    app.use(express.static(distPath));
     app.get("*", (req, res) => {
-      res.sendFile("dist/index.html", { root: "." });
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  // Only listen if not on Vercel (Vercel handles the serverless function)
+  if (process.env.VERCEL !== "1") {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
+
+  return app;
 }
 
-startServer();
+// Export the app for Vercel
+export default startServer();
