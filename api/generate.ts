@@ -89,39 +89,78 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     `;
 
-    console.log(`[${new Date().toISOString()}] Calling Gemini API (gemini-3-flash-preview)...`);
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
-        systemInstruction,
-        tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            metaTitle: { type: Type.STRING },
-            metaDescription: { type: Type.STRING },
-            content: { type: Type.STRING },
-            externalCitations: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  placeholder: { type: Type.STRING },
-                  siteName: { type: Type.STRING },
-                  url: { type: Type.STRING }
-                },
-                required: ["placeholder", "siteName", "url"]
-              }
+    console.log(`[${new Date().toISOString()}] Calling Gemini API...`);
+    
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+          systemInstruction,
+          tools: [{ googleSearch: {} }],
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              metaTitle: { type: Type.STRING },
+              metaDescription: { type: Type.STRING },
+              content: { type: Type.STRING },
+              externalCitations: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    placeholder: { type: Type.STRING },
+                    siteName: { type: Type.STRING },
+                    url: { type: Type.STRING }
+                  },
+                  required: ["placeholder", "siteName", "url"]
+                }
+              },
+              humanConfidence: { type: Type.INTEGER }
             },
-            humanConfidence: { type: Type.INTEGER }
+            required: ["metaTitle", "metaDescription", "content", "externalCitations", "humanConfidence"]
           },
-          required: ["metaTitle", "metaDescription", "content", "externalCitations", "humanConfidence"]
+          temperature: 0.8,
         },
-        temperature: 0.85,
-      },
-    });
+      });
+    } catch (searchError: any) {
+      console.warn(`[${new Date().toISOString()}] Search-enabled generation failed, trying fallback without search:`, searchError.message);
+      
+      // Fallback: Try without googleSearch tool if search is restricted (common with billing issues)
+      response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              metaTitle: { type: Type.STRING },
+              metaDescription: { type: Type.STRING },
+              content: { type: Type.STRING },
+              externalCitations: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    placeholder: { type: Type.STRING },
+                    siteName: { type: Type.STRING },
+                    url: { type: Type.STRING }
+                  },
+                  required: ["placeholder", "siteName", "url"]
+                }
+              },
+              humanConfidence: { type: Type.INTEGER }
+            },
+            required: ["metaTitle", "metaDescription", "content", "externalCitations", "humanConfidence"]
+          },
+          temperature: 0.7,
+        },
+      });
+    }
 
     console.log(`[${new Date().toISOString()}] Gemini API response received.`);
     const text = response.text;

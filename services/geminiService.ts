@@ -11,14 +11,14 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
     });
 
     if (!response.ok) {
-      let errorMessage = "Failed to generate content";
+      let errorMessage = `Server Error (${response.status})`;
       try {
         const text = await response.text();
         try {
           const errorData = JSON.parse(text);
           errorMessage = errorData.error || errorMessage;
         } catch (e) {
-          errorMessage = text || errorMessage;
+          errorMessage = text.substring(0, 200) || errorMessage;
         }
       } catch (e) {
         errorMessage = "Network error or server unreachable";
@@ -26,7 +26,13 @@ export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedB
       throw new Error(errorMessage);
     }
 
-    return await response.json();
+    const responseText = await response.text();
+    try {
+      return JSON.parse(responseText);
+    } catch (e) {
+      console.error("Failed to parse success response as JSON:", responseText);
+      throw new Error("The server returned a successful status but the content was not valid JSON. This might be a temporary platform glitch.");
+    }
   } catch (error: any) {
     console.error("Gemini Service Error:", error);
     throw error;

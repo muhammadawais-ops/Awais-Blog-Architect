@@ -7,9 +7,16 @@ import generateHandler from "./api/generate";
 
 const app = express();
 const PORT = 3000;
-
-// Increase timeout for long-running AI generations
 const SERVER_TIMEOUT = 120000; // 2 minutes
+
+// 1. Listen immediately to signal readiness to the platform
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`[${new Date().toISOString()}] Server started and listening on http://0.0.0.0:${PORT}`);
+});
+
+server.timeout = SERVER_TIMEOUT;
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
 
 // Process Error Handling
 process.on('uncaughtException', (err) => {
@@ -25,24 +32,31 @@ app.use(express.json({ limit: '10mb' }));
 
 // Health check route
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", environment: process.env.NODE_ENV || "development", timestamp: new Date().toISOString() });
+  res.json({ 
+    status: "ok", 
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString() 
+  });
 });
 
 // API Route for Content Generation
 app.post("/api/generate", async (req, res, next) => {
-  console.log(`[${new Date().toISOString()}] Generation request received`);
+  const requestId = Math.random().toString(36).substring(7);
+  console.log(`[${new Date().toISOString()}] [${requestId}] Generation request received`);
+  
   try {
     // Set response timeout
     res.setTimeout(SERVER_TIMEOUT, () => {
-      console.error("Request timed out at server level");
+      console.error(`[${requestId}] Request timed out at server level`);
       if (!res.headersSent) {
-        res.status(504).json({ error: "Generation timed out. Please try a shorter word count or simpler topic." });
+        res.status(504).json({ error: "The AI is taking too long to research and write. Please try a shorter word count or a simpler topic." });
       }
     });
 
     await generateHandler(req as any, res as any);
+    console.log(`[${new Date().toISOString()}] [${requestId}] Request completed`);
   } catch (error: any) {
-    console.error("Generation Handler Error:", error);
+    console.error(`[${requestId}] Generation Handler Error:`, error);
     next(error);
   }
 });
@@ -83,13 +97,6 @@ async function setupVite() {
     }
   }
 }
-
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`[${new Date().toISOString()}] Server listening on http://0.0.0.0:${PORT}`);
-});
-
-server.timeout = SERVER_TIMEOUT;
-server.keepAliveTimeout = 65000;
 
 setupVite().catch(err => {
   console.error("CRITICAL: Failed to setup Vite:", err);

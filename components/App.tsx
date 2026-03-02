@@ -51,8 +51,8 @@ const App: React.FC = () => {
       setError(err.message || "Failed to generate content.");
       
       // Handle platform-level errors specifically
-      if (err.message?.includes("FUNCTION_INVOCATION_FAILED")) {
-        setError("The server encountered a platform-level timeout or crash. This usually happens when generating very long content with complex research. Please try a shorter word count or a simpler topic.");
+      if (err.message?.includes("FUNCTION_INVOCATION_FAILED") || err.message?.includes("Server Error (504)")) {
+        setError("The server encountered a platform-level timeout or crash. This can happen if the AI research takes too long or if there's a connection issue. I've added a fallback mechanism to try again without research tools if the first attempt fails. Please try once more.");
       } else if (err.message?.includes("Billing") || err.message?.includes("Quota")) {
         setShowKeySelector(true);
       }
