@@ -49,6 +49,14 @@ const App: React.FC = () => {
         setShowKeySelector(true);
       }
       setError(err.message || "Failed to generate content.");
+      
+      // Handle platform-level errors specifically
+      if (err.message?.includes("FUNCTION_INVOCATION_FAILED")) {
+        setError("The server encountered a platform-level timeout or crash. This usually happens when generating very long content with complex research. Please try a shorter word count or a simpler topic.");
+      } else if (err.message?.includes("Billing") || err.message?.includes("Quota")) {
+        setShowKeySelector(true);
+      }
+      
       setStatus(GenerationStatus.ERROR);
     }
   };

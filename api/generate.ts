@@ -21,8 +21,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    console.log(`[${new Date().toISOString()}] Initializing GoogleGenAI...`);
     const ai = new GoogleGenAI({ apiKey });
     
+    console.log(`[${new Date().toISOString()}] Preparing prompt for topic: ${inputs.topic}`);
     const systemInstruction = `
       ${EEAT_GUIDELINES}
 
@@ -87,6 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     `;
 
+    console.log(`[${new Date().toISOString()}] Calling Gemini API (gemini-3-flash-preview)...`);
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
@@ -120,11 +123,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
+    console.log(`[${new Date().toISOString()}] Gemini API response received.`);
     const text = response.text;
     if (!text) throw new Error("EMPTY_RESPONSE");
 
+    console.log(`[${new Date().toISOString()}] Parsing JSON response...`);
     const data = JSON.parse(text);
     
+    console.log(`[${new Date().toISOString()}] Processing citations and metrics...`);
     // Inject Citations into content
     let finalContent = data.content || "";
     const sources: any[] = [];
@@ -165,6 +171,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    console.log(`[${new Date().toISOString()}] Generation successful. Sending response.`);
     return res.json({
       content: finalContent,
       metaTitle: data.metaTitle,
@@ -174,7 +181,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
   } catch (error: any) {
-    console.error("Vercel Function Error:", error);
+    console.error(`[${new Date().toISOString()}] Vercel Function Error:`, error);
+    // Handle specific Gemini errors
+    if (error.message?.includes("billing") || error.message?.includes("quota")) {
+      return res.status(403).json({ error: "Gemini API Billing/Quota Error: Please ensure your Google Cloud project has billing enabled and you have sufficient quota." });
+    }
     return res.status(500).json({ error: error.message || "Failed to generate content" });
   }
 }
