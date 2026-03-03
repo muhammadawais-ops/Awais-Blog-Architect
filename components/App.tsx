@@ -49,14 +49,6 @@ const App: React.FC = () => {
         setShowKeySelector(true);
       }
       setError(err.message || "Failed to generate content.");
-      
-      // Handle platform-level errors specifically
-      if (err.message?.includes("FUNCTION_INVOCATION_FAILED") || err.message?.includes("Server Error (504)")) {
-        setError("The server encountered a platform-level timeout or crash. This can happen if the AI research takes too long or if there's a connection issue. I've added a fallback mechanism to try again without research tools if the first attempt fails. Please try once more.");
-      } else if (err.message?.includes("Billing") || err.message?.includes("Quota")) {
-        setShowKeySelector(true);
-      }
-      
       setStatus(GenerationStatus.ERROR);
     }
   };
@@ -154,20 +146,7 @@ const App: React.FC = () => {
                 </a>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-4">
-                <button 
-                  onClick={handleGenerate} 
-                  className="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-black text-sm shadow-lg transition-all active:scale-95"
-                >
-                  Try Again Now
-                </button>
-                <button 
-                  onClick={() => setStatus(GenerationStatus.IDLE)} 
-                  className="text-[10px] text-slate-400 hover:text-slate-600 font-bold uppercase tracking-widest"
-                >
-                  Reset Session
-                </button>
-              </div>
+              <button onClick={() => setStatus(GenerationStatus.IDLE)} className="px-6 py-2 bg-slate-900 text-white rounded-full font-bold text-sm">Retry Session</button>
             )}
           </div>
         )}
