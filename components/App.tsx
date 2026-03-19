@@ -21,7 +21,12 @@ const App: React.FC = () => {
     secondaryKeywords: '',
     wordCount: 1200,
     websiteUrl: '',
-    businessDetails: ''
+    businessDetails: '',
+    brandName: '',
+    contentType: 'blog',
+    backlinkUrl: '',
+    anchorText: '',
+    targetSiteContext: ''
   });
 
   const [status, setStatus] = useState<GenerationStatus>(GenerationStatus.IDLE);
