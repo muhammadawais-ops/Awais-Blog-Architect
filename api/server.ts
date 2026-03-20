@@ -50,27 +50,23 @@ app.post("/api/generate", async (req, res, next) => {
 
     if (!inputs) return res.status(400).json({ error: "Missing inputs" });
 
+    const isGuestPost = inputs.contentType === 'guest_post';
     const systemInstruction = `
       ${EEAT_GUIDELINES}
-      CONTEXT: ${inputs.businessDetails || "SEO Content Strategist."}
-      TARGET: ${inputs.websiteUrl}
+      ROLE: Senior SEO Content Architect.
+      CONTEXT: ${inputs.businessDetails || "Expert Copywriter."}
+      BRAND: ${inputs.brandName}
+      TARGET URL: ${inputs.websiteUrl}
+      ${isGuestPost ? `GUEST POST MODE: Focus on educational value for ${inputs.targetSiteContext}. Include a natural mention of ${inputs.anchorText} linking to ${inputs.backlinkUrl}.` : ''}
       RULES: Simple English (Grade 4). First paragraph BOLD direct answer. Structure: H1, AI Overview (Bold), Intro, Body (H2-H5), FAQs, Conclusion. Citations: [[EXT_1]], [[EXT_2]].
     `;
 
     const prompt = `
-      Write a ${inputs.wordCount}-word blog post about "${inputs.topic}".
+      Write a ${inputs.wordCount}-word ${isGuestPost ? 'Guest Post' : 'Blog Post'} about "${inputs.topic}".
       Primary Keyword: "${inputs.primaryKeyword}"
       Secondary Keywords: "${inputs.secondaryKeywords}"
-      Return ONLY valid JSON:
-      {
-        "metaTitle": "...",
-        "metaDescription": "...",
-        "content": "...",
-        "externalCitations": [
-          { "placeholder": "[[EXT_1]]", "siteName": "...", "url": "..." }
-        ],
-        "humanConfidence": 99
-      }
+      ${isGuestPost ? `Requirement: Naturally integrate a link with anchor text "${inputs.anchorText}" pointing to "${inputs.backlinkUrl}".` : ''}
+      Return ONLY valid JSON matching the schema. If no external citations are needed, return an empty array for externalCitations.
     `;
 
     console.log(`[${requestId}] Calling Gemini...`);
@@ -164,21 +160,25 @@ async function setupVite() {
   const __dirname = path.dirname(__filename);
   const distPath = path.join(__dirname, "..", "dist");
 
-  const isProduction = process.env.NODE_ENV === "production" || fs.existsSync(path.join(distPath, "index.html"));
+  // In Vercel production, we don't want to even try loading Vite
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
 
   if (isProduction) {
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      if (req.path.startsWith("/api/")) return res.status(404).json({ error: "API route not found" });
-      const indexPath = path.join(distPath, "index.html");
-      if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        res.status(404).send("Frontend not found. Please run build first.");
-      }
-    });
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+      app.get("*", (req, res) => {
+        if (req.path.startsWith("/api/")) return res.status(404).json({ error: "API route not found" });
+        const indexPath = path.join(distPath, "index.html");
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(404).send("Frontend assets not found. Please ensure build ran correctly.");
+        }
+      });
+    }
   } else {
     try {
+      // Only import Vite in non-production environments
       const { createServer: createViteServer } = await import("vite");
       const vite = await createViteServer({
         server: { middlewareMode: true },
@@ -186,7 +186,7 @@ async function setupVite() {
       });
       app.use(vite.middlewares);
     } catch (e) {
-      console.error("Vite load failed:", e);
+      console.error("Vite load failed (expected in production):", e);
     }
   }
 }

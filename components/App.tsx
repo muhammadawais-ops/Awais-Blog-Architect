@@ -19,7 +19,7 @@ const App: React.FC = () => {
     topic: '',
     primaryKeyword: '',
     secondaryKeywords: '',
-    wordCount: 1200,
+    wordCount: 800,
     websiteUrl: '',
     businessDetails: '',
     brandName: '',
