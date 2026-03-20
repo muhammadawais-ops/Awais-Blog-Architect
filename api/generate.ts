@@ -112,47 +112,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     `;
 
-    console.log(`[${new Date().toISOString()}] Calling Gemini API...`);
+    console.log(`[${new Date().toISOString()}] Calling Gemini API (gemini-3-flash-preview)...`);
     
     let response;
     try {
-      response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
-        contents: prompt,
-        config: {
-          systemInstruction,
-          tools: [{ googleSearch: {} }],
-          responseMimeType: "application/json",
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              metaTitle: { type: Type.STRING },
-              metaDescription: { type: Type.STRING },
-              content: { type: Type.STRING },
-              externalCitations: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    placeholder: { type: Type.STRING },
-                    siteName: { type: Type.STRING },
-                    url: { type: Type.STRING }
-                  },
-                  required: ["placeholder", "siteName", "url"]
-                }
-              },
-              humanConfidence: { type: Type.INTEGER }
-            },
-            required: ["metaTitle", "metaDescription", "content", "externalCitations", "humanConfidence"]
-          },
-          temperature: 0.8,
-        },
-      });
-    } catch (searchError: any) {
-      console.warn(`[${new Date().toISOString()}] Search-enabled generation failed, trying fallback without search:`, searchError.message);
-      
-      // Fallback: Try without googleSearch tool if search is restricted (common with billing issues)
       response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: prompt,
@@ -185,6 +148,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           temperature: 0.7,
         },
       });
+    } catch (error: any) {
+      console.error(`[${new Date().toISOString()}] Gemini API Error:`, error.message);
+      throw error;
     }
 
     console.log(`[${new Date().toISOString()}] Gemini API response received.`);

@@ -133,6 +133,11 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
             />
+            {inputs.wordCount > 1000 && (
+              <p className="text-[9px] text-amber-600 font-bold italic uppercase tracking-tighter">
+                * High word counts may cause timeouts on some hosting platforms.
+              </p>
+            )}
           </div>
         </div>
 
