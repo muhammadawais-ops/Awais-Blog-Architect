@@ -1,14 +1,14 @@
 {
   "version": 2,
   "functions": {
-    "server.ts": {
+    "api/server.ts": {
       "maxDuration": 60
     }
   },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/server.ts"
+      "destination": "/api/server.ts"
     }
   ]
 }

@@ -5,8 +5,8 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
-import { EEAT_GUIDELINES } from "./services/eeatGuidelines";
-import { analyzeText } from "./utils/textAnalysis";
+import { EEAT_GUIDELINES } from "../services/eeatGuidelines";
+import { analyzeText } from "../utils/textAnalysis";
 
 const app = express();
 const PORT = 3000;
@@ -171,7 +171,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 async function setupVite() {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
-  const distPath = path.join(__dirname, "dist");
+  const distPath = path.join(__dirname, "..", "dist");
 
   const isProduction = process.env.NODE_ENV === "production" || fs.existsSync(path.join(distPath, "index.html"));
 
