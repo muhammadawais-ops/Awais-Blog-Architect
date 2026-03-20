@@ -11,7 +11,26 @@ export const analyzeText = (text: string): AnalysisMetrics => {
   const charsNoSpace = cleanContent.replace(/\s+/g, '').length;
   
   if (words.length === 0 || sentences.length === 0) {
-    return {} as AnalysisMetrics;
+    return {
+      aiScore: 0,
+      perplexity: 0,
+      burstiness: 0,
+      syntacticComplexity: 0,
+      semanticCoherence: 0,
+      vocabularyDiversity: 0,
+      entropy: 0,
+      fleschScore: 0,
+      fogIndex: 0,
+      ariGrade: 0,
+      avgSentenceLength: 0,
+      passiveVoiceRatio: 0,
+      complexWordPercentage: 0,
+      adverbDensity: 0,
+      hardSentences: 0,
+      veryHardSentences: 0,
+      wordCount: 0,
+      sentenceCount: 0
+    };
   }
 
   const wordCount = words.length;

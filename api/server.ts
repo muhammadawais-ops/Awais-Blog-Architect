@@ -10,16 +10,7 @@ import { analyzeText } from "../utils/textAnalysis";
 
 const app = express();
 const PORT = 3000;
-const SERVER_TIMEOUT = 180000; // 3 minutes for long blog posts
-
-// 1. Listen immediately to signal readiness
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`[${new Date().toISOString()}] Server started on http://0.0.0.0:${PORT}`);
-});
-
-server.timeout = SERVER_TIMEOUT;
-server.keepAliveTimeout = 70000;
-server.headersTimeout = 71000;
+const SERVER_TIMEOUT = 180000; // 3 minutes
 
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
@@ -201,6 +192,16 @@ async function setupVite() {
 }
 
 setupVite();
+
+// Only listen if not on Vercel
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  const server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`[${new Date().toISOString()}] Server started on http://0.0.0.0:${PORT}`);
+  });
+  server.timeout = SERVER_TIMEOUT;
+  server.keepAliveTimeout = 70000;
+  server.headersTimeout = 71000;
+}
 
 export default app;
 
