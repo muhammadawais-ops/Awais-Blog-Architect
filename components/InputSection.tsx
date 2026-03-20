@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { BlogInputs } from '../types';
+import { generateSemanticVariations } from '../services/geminiService';
 
 interface InputSectionProps {
   inputs: BlogInputs;
@@ -10,9 +11,26 @@ interface InputSectionProps {
 }
 
 const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenerate, isLoading }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const [isGeneratingVariations, setIsGeneratingVariations] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setInputs({ ...inputs, [name]: name === 'wordCount' ? parseInt(value) || 0 : value });
+  };
+
+  const handleGenerateVariations = async () => {
+    if (!inputs.primaryKeyword) return;
+    setIsGeneratingVariations(true);
+    try {
+      const variations = await generateSemanticVariations(inputs.primaryKeyword);
+      const currentSecondary = inputs.secondaryKeywords ? inputs.secondaryKeywords.split(',').map(s => s.trim()) : [];
+      const updatedSecondary = Array.from(new Set([...currentSecondary, ...variations])).join(', ');
+      setInputs({ ...inputs, secondaryKeywords: updatedSecondary });
+    } catch (error) {
+      console.error("Error generating variations:", error);
+    } finally {
+      setIsGeneratingVariations(false);
+    }
   };
 
   const loadTemplate = () => {
@@ -44,6 +62,20 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
       </div>
 
       <div className="grid grid-cols-1 gap-6">
+        {/* Content Type Selector */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-700 uppercase">Content Architecture Type</label>
+          <select
+            name="contentType"
+            value={inputs.contentType}
+            onChange={handleChange}
+            className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all font-bold text-slate-800"
+          >
+            <option value="blog">On Page Blog</option>
+            <option value="guest_post">Off Page Guest Post</option>
+          </select>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-700 uppercase">Primary Topic / Headline</label>
@@ -57,7 +89,18 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 uppercase">Primary Keyword (NLP Focus)</label>
+            <label className="text-xs font-bold text-slate-700 uppercase flex justify-between">
+              Primary Keyword (NLP Focus)
+              {inputs.primaryKeyword && (
+                <button 
+                  onClick={handleGenerateVariations}
+                  disabled={isGeneratingVariations}
+                  className="text-[10px] text-indigo-600 hover:underline lowercase font-black"
+                >
+                  {isGeneratingVariations ? 'Generating...' : '+ Get Semantic Variations'}
+                </button>
+              )}
+            </label>
             <input
               type="text"
               name="primaryKeyword"
@@ -90,6 +133,11 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
             />
+            {inputs.wordCount > 1000 && (
+              <p className="text-[9px] text-amber-600 font-bold italic uppercase tracking-tighter">
+                * High word counts may cause timeouts on some hosting platforms.
+              </p>
+            )}
           </div>
         </div>
 
@@ -106,6 +154,63 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
             />
             <p className="text-[10px] text-slate-500 font-medium">This domain will be naturally woven into the content as an expert reference.</p>
           </div>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700 uppercase">Brand Name / Author Name</label>
+            <input
+              type="text"
+              name="brandName"
+              value={inputs.brandName}
+              onChange={handleChange}
+              placeholder="e.g. Awais Blog Architect"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all"
+            />
+            <p className="text-[10px] text-slate-500 font-medium">Used for soft brand mentions and author bio.</p>
+          </div>
+        </div>
+
+        {/* Guest Post Specific Fields */}
+        {inputs.contentType === 'guest_post' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-indigo-700 uppercase">Backlink URL (Goal)</label>
+              <input
+                type="url"
+                name="backlinkUrl"
+                value={inputs.backlinkUrl}
+                onChange={handleChange}
+                placeholder="https://client-site.com/target-page"
+                className="w-full px-4 py-3 rounded-xl border-2 border-white focus:border-indigo-500 outline-none transition-all shadow-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-indigo-700 uppercase">Anchor Text</label>
+              <input
+                type="text"
+                name="anchorText"
+                value={inputs.anchorText}
+                onChange={handleChange}
+                placeholder="e.g. expert SEO services"
+                className="w-full px-4 py-3 rounded-xl border-2 border-white focus:border-indigo-500 outline-none transition-all shadow-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-indigo-700 uppercase">Host Website Niche/Context</label>
+              <input
+                type="text"
+                name="targetSiteContext"
+                value={inputs.targetSiteContext}
+                onChange={handleChange}
+                placeholder="e.g. Tech Blog, Marketing News"
+                className="w-full px-4 py-3 rounded-xl border-2 border-white focus:border-indigo-500 outline-none transition-all shadow-sm"
+              />
+            </div>
+            <p className="md:col-span-3 text-[10px] text-indigo-600 font-bold italic">
+              * Guest Post mode focuses on educational, non-salesy content with a natural author bio backlink.
+            </p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-6">
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-700 uppercase">Senior Specialist EEAT Context</label>
             <button 
@@ -133,7 +238,7 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
           isLoading ? 'bg-indigo-400 cursor-wait' : 'bg-slate-900 hover:bg-black active:scale-[0.98]'
         }`}
       >
-        {isLoading ? 'Architecting Senior SEO Content...' : 'Generate Pro Humanized Content'}
+        {isLoading ? 'Architecting Senior SEO Content...' : `Generate Pro ${inputs.contentType === 'guest_post' ? 'Off Page Guest Post' : 'On Page Blog'}`}
       </button>
     </div>
   );
