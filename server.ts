@@ -4,61 +4,159 @@ import cors from "cors";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import generateHandler from "./api/generate";
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
+import { EEAT_GUIDELINES } from "./services/eeatGuidelines";
+import { analyzeText } from "./utils/textAnalysis";
 
 const app = express();
 const PORT = 3000;
-const SERVER_TIMEOUT = 120000; // 2 minutes
+const SERVER_TIMEOUT = 180000; // 3 minutes for long blog posts
 
-// 1. Listen immediately to signal readiness to the platform
+// 1. Listen immediately to signal readiness
 const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`[${new Date().toISOString()}] Server started and listening on http://0.0.0.0:${PORT}`);
+  console.log(`[${new Date().toISOString()}] Server started on http://0.0.0.0:${PORT}`);
 });
 
 server.timeout = SERVER_TIMEOUT;
-server.keepAliveTimeout = 65000;
-server.headersTimeout = 66000;
-
-// Process Error Handling
-process.on('uncaughtException', (err) => {
-  console.error('CRITICAL: Uncaught Exception:', err);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
-});
+server.keepAliveTimeout = 70000;
+server.headersTimeout = 71000;
 
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '20mb' }));
 
-// Health check route
+// Health check
 app.get("/api/health", (req, res) => {
-  res.json({ 
-    status: "ok", 
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString() 
-  });
+  res.json({ status: "ok", uptime: process.uptime() });
 });
 
 // API Route for Content Generation
 app.post("/api/generate", async (req, res, next) => {
   const requestId = Math.random().toString(36).substring(7);
-  console.log(`[${new Date().toISOString()}] [${requestId}] Generation request received`);
+  console.log(`[${requestId}] Generation request received`);
   
+  const { inputs, task, primaryKeyword } = req.body || {};
+  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    console.error(`[${requestId}] CRITICAL: No API Key found`);
+    return res.status(401).json({ error: "API_KEY_MISSING" });
+  }
+
   try {
-    // Set response timeout
-    res.setTimeout(SERVER_TIMEOUT, () => {
-      console.error(`[${requestId}] Request timed out at server level`);
-      if (!res.headersSent) {
-        res.status(504).json({ error: "The AI is taking too long to research and write. Please try a shorter word count or a simpler topic." });
+    const ai = new GoogleGenAI({ apiKey });
+
+    // Handle Semantic Variations
+    if (task === 'semantic_variations') {
+      if (!primaryKeyword) return res.status(400).json({ error: "Missing primaryKeyword" });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Generate 4 semantic variations or LSI keywords for: "${primaryKeyword}". Return ONLY the variations as a comma-separated list.`,
+        config: { temperature: 0.7, responseMimeType: "text/plain" },
+      });
+      const variations = response.text ? response.text.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+      return res.json({ variations });
+    }
+
+    if (!inputs) return res.status(400).json({ error: "Missing inputs" });
+
+    const systemInstruction = `
+      ${EEAT_GUIDELINES}
+      CONTEXT: ${inputs.businessDetails || "SEO Content Strategist."}
+      TARGET: ${inputs.websiteUrl}
+      RULES: Simple English (Grade 4). First paragraph BOLD direct answer. Structure: H1, AI Overview (Bold), Intro, Body (H2-H5), FAQs, Conclusion. Citations: [[EXT_1]], [[EXT_2]].
+    `;
+
+    const prompt = `
+      Write a ${inputs.wordCount}-word blog post about "${inputs.topic}".
+      Primary Keyword: "${inputs.primaryKeyword}"
+      Secondary Keywords: "${inputs.secondaryKeywords}"
+      Return ONLY valid JSON:
+      {
+        "metaTitle": "...",
+        "metaDescription": "...",
+        "content": "...",
+        "externalCitations": [
+          { "placeholder": "[[EXT_1]]", "siteName": "...", "url": "..." }
+        ],
+        "humanConfidence": 99
       }
+    `;
+
+    console.log(`[${requestId}] Calling Gemini...`);
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: "application/json",
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            metaTitle: { type: Type.STRING },
+            metaDescription: { type: Type.STRING },
+            content: { type: Type.STRING },
+            externalCitations: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  placeholder: { type: Type.STRING },
+                  siteName: { type: Type.STRING },
+                  url: { type: Type.STRING }
+                },
+                required: ["placeholder", "siteName", "url"]
+              }
+            },
+            humanConfidence: { type: Type.INTEGER }
+          },
+          required: ["metaTitle", "metaDescription", "content", "externalCitations", "humanConfidence"]
+        },
+        temperature: 0.7,
+      },
     });
 
-    await generateHandler(req as any, res as any);
-    console.log(`[${new Date().toISOString()}] [${requestId}] Request completed`);
+    let text = response.text || "";
+    // Robust JSON cleaning
+    if (text.includes("```json")) {
+      text = text.split("```json")[1].split("```")[0].trim();
+    } else if (text.includes("```")) {
+      text = text.split("```")[1].split("```")[0].trim();
+    }
+
+    const data = JSON.parse(text);
+    let finalContent = data.content || "";
+    const sources: any[] = [];
+
+    if (data.externalCitations && Array.isArray(data.externalCitations)) {
+      data.externalCitations.forEach((citation: any) => {
+        if (citation.placeholder && citation.url) {
+          const markdownLink = `[${citation.siteName || "Source"}](${citation.url})`;
+          finalContent = finalContent.split(citation.placeholder).join(markdownLink);
+          sources.push({ title: citation.siteName || "Reference", uri: citation.url });
+        }
+      });
+    }
+
+    const metrics = analyzeText(finalContent);
+    console.log(`[${requestId}] Success`);
+    return res.json({
+      content: finalContent,
+      metaTitle: data.metaTitle,
+      metaDescription: data.metaDescription,
+      sources,
+      metrics
+    });
+
   } catch (error: any) {
-    console.error(`[${requestId}] Generation Handler Error:`, error);
-    next(error);
+    console.error(`[${requestId}] Error:`, error);
+    if (!res.headersSent) {
+      const msg = error.message || "Failed to generate content";
+      if (msg.includes("fetch failed") || msg.includes("timeout")) {
+        return res.status(504).json({ error: "The AI took too long. Please try a shorter word count." });
+      }
+      res.status(500).json({ error: msg });
+    }
   }
 });
 
@@ -66,10 +164,7 @@ app.post("/api/generate", async (req, res, next) => {
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error("Global Error Handler:", err);
   if (!res.headersSent) {
-    res.status(500).json({ 
-      error: err.message || "Internal Server Error",
-      type: err.name || "Error"
-    });
+    res.status(500).json({ error: err.message || "Internal Server Error" });
   }
 });
 
@@ -78,7 +173,7 @@ async function setupVite() {
   const __dirname = path.dirname(__filename);
   const distPath = path.join(__dirname, "dist");
 
-  const isProduction = process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging" || fs.existsSync(path.join(distPath, "index.html"));
+  const isProduction = process.env.NODE_ENV === "production" || fs.existsSync(path.join(distPath, "index.html"));
 
   if (isProduction) {
     app.use(express.static(distPath));
@@ -86,14 +181,7 @@ async function setupVite() {
       if (req.path.startsWith("/api/")) return res.status(404).json({ error: "API route not found" });
       const indexPath = path.join(distPath, "index.html");
       if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath, (err) => {
-          if (err) {
-            console.error("Error sending index.html:", err);
-            if (!res.headersSent) {
-              res.status(500).send("Internal Server Error: Could not load frontend.");
-            }
-          }
-        });
+        res.sendFile(indexPath);
       } else {
         res.status(404).send("Frontend not found. Please run build first.");
       }
@@ -106,16 +194,13 @@ async function setupVite() {
         appType: "spa",
       });
       app.use(vite.middlewares);
-      console.log("Vite middleware loaded successfully");
     } catch (e) {
-      console.error("CRITICAL: Failed to load Vite middleware:", e);
+      console.error("Vite load failed:", e);
     }
   }
 }
 
-setupVite().catch(err => {
-  console.error("CRITICAL: Failed to setup Vite:", err);
-});
+setupVite();
 
 export default app;
 
