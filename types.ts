@@ -10,6 +10,7 @@ export interface BlogInputs {
   businessDetails: string;
   brandName: string;
   contentType: ContentType;
+  searchIntent: 'Informational' | 'Commercial' | 'Transactional';
   backlinkUrl?: string;
   anchorText?: string;
   targetSiteContext?: string;

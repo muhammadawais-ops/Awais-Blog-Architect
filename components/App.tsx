@@ -24,6 +24,7 @@ const App: React.FC = () => {
     businessDetails: '',
     brandName: '',
     contentType: 'blog',
+    searchIntent: 'Informational',
     backlinkUrl: '',
     anchorText: '',
     targetSiteContext: ''

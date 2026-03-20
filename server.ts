@@ -4,6 +4,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import generateHandler from "./api/generate";
+import variationsHandler from "./api/variations";
 
 const app = express();
 const PORT = 3000;
@@ -57,6 +58,20 @@ app.post("/api/generate", async (req, res, next) => {
     console.log(`[${new Date().toISOString()}] [${requestId}] Request completed`);
   } catch (error: any) {
     console.error(`[${requestId}] Generation Handler Error:`, error);
+    next(error);
+  }
+});
+
+// API Route for Semantic Variations
+app.post("/api/variations", async (req, res, next) => {
+  const requestId = Math.random().toString(36).substring(7);
+  console.log(`[${new Date().toISOString()}] [${requestId}] Variations request received`);
+  
+  try {
+    await variationsHandler(req as any, res as any);
+    console.log(`[${new Date().toISOString()}] [${requestId}] Variations completed`);
+  } catch (error: any) {
+    console.error(`[${requestId}] Variations Handler Error:`, error);
     next(error);
   }
 });

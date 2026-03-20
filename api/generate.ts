@@ -29,66 +29,108 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log(`[${new Date().toISOString()}] Initializing GoogleGenAI...`);
     const ai = new GoogleGenAI({ apiKey });
     
-    console.log(`[${new Date().toISOString()}] Preparing prompt for topic: ${inputs.topic}`);
+    const isGuestPost = inputs.contentType === 'guest_post';
+
+    console.log(`[${new Date().toISOString()}] Preparing prompt for topic: ${inputs.topic} (Type: ${inputs.contentType})`);
     const systemInstruction = `
       ${EEAT_GUIDELINES}
 
+      ROLE: You are an ${isGuestPost ? "Expert Guest Post Writer (Teacher Persona)" : "Expert Senior SEO Content Strategist & Consultant (Closer Persona)"}.
+      
       ADDITIONAL CONTEXT & RULES:
+      - Brand Name: ${inputs.brandName || "Our Agency"}
       - EEAT Context: ${inputs.businessDetails || "Senior SEO Content Strategist with 20 years of experience."}
-      - Target Website: ${inputs.websiteUrl}
+      - Target Website (Client): ${inputs.websiteUrl}
+      - Search Intent: ${inputs.searchIntent}
+      ${isGuestPost ? `- Backlink Target: ${inputs.backlinkUrl} (Anchor: ${inputs.anchorText})` : ""}
+      ${isGuestPost ? `- Host Website Context (Where this will be published): ${inputs.targetSiteContext}` : ""}
       
       LANGUAGE & ENGAGEMENT (STRICT):
-      - Language: Use extremely simple, clear, and conversational English (Grade 3-4 level).
+      - Language: Use extremely simple, clear, and conversational US English (Grade 3-4 level).
+      - Tone: Helpful, persuasive, and authoritative but approachable. Avoid AI-like fluff and jargon.
       - Pain Points: Start by immediately addressing the reader's specific pain points.
+      - PARAGRAPHS: Keep paragraphs extremely short (2-3 sentences max). Avoid "walls of text".
       
-      RESEARCH & LINKING (CRITICAL):
-      - EXTERNAL LINKS: Use placeholders like [[EXT_1]], [[EXT_2]] in text. Provide mapping in "externalCitations" JSON field.
-      - INTERNAL LINKS: Search for 2-3 relevant pages from ${inputs.websiteUrl} using "site:${inputs.websiteUrl} ${inputs.topic}".
-      
-      KEYWORD STRATEGY:
-      - PRIMARY KEYWORD: "${inputs.primaryKeyword}" (Title, Meta, H1, Intro, Body, Conclusion).
-      - SECONDARY KEYWORDS: "${inputs.secondaryKeywords}" (Semantic SEO).
+      KEYWORD STRATEGY (MANDATORY):
+      - PRIMARY KEYWORD: "${inputs.primaryKeyword}"
+      - Use primary keyword naturally in: H1 title, First 100 words, At least one H2, Meta title, and Meta description.
+      - SECONDARY KEYWORDS: "${inputs.secondaryKeywords}" (Use for semantic SEO).
+      - Avoid keyword stuffing. Keep it natural.
 
-      CONTENT STRUCTURE RULES (NON-NEGOTIABLE):
-      1. H1 TITLE: Catchy, personal, includes primary keyword.
-      2. **AI OVERVIEW (CRITICAL)**: The very first paragraph after H1 must be **BOLDED**. It MUST be a blunt, direct, and simple answer to the user's main query or topic. No fluff, no "In this blog...", no filler. Just the direct answer in extremely clear language. (~300-500 characters).
-      3. INTRODUCTION HEADING: Use "## Introduction:". Start by addressing the reader's pain points.
-      4. BODY: Use H2, H3, H4, and H5 hierarchically. Short paragraphs citing authoritative data.
-      5. ORGANIC FORMATTING: Bold key phrases.
-      6. FINAL INSIGHT HEADING: Professional dynamic heading (Unique & Professional).
-      7. PROFESSIONAL BRIDGE (CTA): Professional dynamic bridge to ${inputs.websiteUrl}.
-      8. FAQs: 3-5 questions with blunt, exact answers.
+      E-E-A-T OPTIMIZATION (CRITICAL):
+      - Demonstrate REAL experience.
+      - Include: Realistic examples, specific use-case scenarios, and specific outcomes (e.g., "we saw a 40% traffic growth").
+      - Use data-backed insights and mention industry-standard tools/practices.
+
+      CONTENT STRUCTURE (NON-NEGOTIABLE):
+      1. H1 TITLE: Catchy, includes primary keyword.
+      2. HOOK: A compelling opening that addresses search intent.
+      3. INTRODUCTION: Include the primary keyword in the first 100 words.
+      4. PROBLEM SECTION: Deep dive into the reader's pain points.
+      5. CORE SOLUTION: The main value proposition/answer.
+      6. ADVANCED TIPS: High-level insights demonstrating expertise.
+      7. COMMON MISTAKES: What to avoid (optional but recommended).
+      8. FAQ SECTION: 3-5 questions with blunt, exact answers.
+      9. CONCLUSION: Summarize and build trust.
+      10. STRONG CTA: Benefit-driven call to action for ${inputs.brandName || "our agency"}.
+
+      ON-PAGE SEO:
+      - Meta Title: 55-60 characters.
+      - Meta Description: 140-155 characters.
+      - Internal Linking: Use [Insert internal link to relevant page on ${inputs.websiteUrl}] placeholders.
+      - Image Placement: Use [Add image: Description with alt text including keywords] placeholders.
+
+      ${isGuestPost ? `
+      GUEST POST SPECIFICS (TEACHER PERSONA):
+      - TONE: Neutral, Educational, Authority-based. Third-person perspective. Think: "I am a teacher, not a seller."
+      - TOPIC SELECTION: Must be highly relevant to the host website niche (${inputs.targetSiteContext}) and informational, not sales-driven.
+      - Soft Brand Mention: Mention experience naturally (e.g., "In our experience at ${inputs.brandName || 'our agency'} working with small businesses..."). NO hard selling.
+      - Author Bio: Short, authority-based, includes the backlink to ${inputs.backlinkUrl} with anchor "${inputs.anchorText}" and a clear CTA.
+      ` : `
+      BLOG POST SPECIFICS (CONSULTANT PERSONA):
+      - TONE: Helpful, Persuasive, Clear, Simple, Conversational (US Tone). First-person perspective. Think: "I am a consultant who wants to close a client."
+      - SEARCH INTENT: Identify if intent is Informational, Commercial, or Transactional. Structure strictly around solving the user's problem.
+      - GOAL: Problem -> Solution -> Action.
+      `}
     `;
 
     const prompt = `
-      TASK: Write a master-level blog post that is simple, engaging, and authoritative.
+      TASK: Write a master-level ${isGuestPost ? "GUEST POST" : "BLOG POST"} that is simple, engaging, and authoritative.
       TOPIC: ${inputs.topic}
       PRIMARY KEYWORD: ${inputs.primaryKeyword}
-      SECONDARY KEYWORDS: ${inputs.secondaryKeywords}
-      TARGET LENGTH: ${inputs.wordCount} words (STRICTLY MATCH THIS WORD COUNT)
+      SEARCH INTENT: ${inputs.searchIntent}
+      TARGET LENGTH: ${inputs.wordCount} words
       TARGET WEBSITE: ${inputs.websiteUrl}
+      ${isGuestPost ? `BACKLINK: ${inputs.backlinkUrl} with anchor "${inputs.anchorText}"` : ""}
       
-      CITATION SYSTEM (CRITICAL):
-      1. Use Google Search to find 3-4 high-authority external sources (Forbes, Wikipedia, HBR, etc.).
-      2. In the "content" field, DO NOT write the full markdown link. Instead, use placeholders like [[EXT_1]], [[EXT_2]], [[EXT_3]], [[EXT_4]].
-      3. Place these placeholders naturally within the sentences where the information is cited.
+      STRICT ADHERENCE TO SEARCH INTENT:
+      - If Informational: Focus on educating and solving a "how-to" problem.
+      - If Commercial: Focus on helping the user make a decision (comparisons, reviews).
+      - If Transactional: Focus on the benefits of taking action (hiring, buying).
+
+      CITATION & LINKING SYSTEM (CRITICAL):
+      1. Use Google Search to find 3-4 high-authority external sources.
+      2. In the "content" field, use placeholders like [[EXT_1]], [[EXT_2]], etc.
+      3. TARGET DOMAIN INTEGRATION: Naturally weave ${inputs.websiteUrl} into the content.
       4. In the "externalCitations" field of the JSON, provide the details for each placeholder.
+      ${isGuestPost ? `5. BACKLINK INTEGRATION: Add a natural link to ${inputs.backlinkUrl} using anchor text "${inputs.anchorText}" in the Author Bio section.` : ""}
 
       MANDATORY REQUIREMENTS: 
-      - START WITH PAIN POINTS: The introduction must immediately resonate with the reader's struggles.
-      - SIMPLE LANGUAGE: Write so an 8-year-old (3rd/4th grade) can understand perfectly.
-      - BOLDED ANSWER: The first paragraph after H1 must be a bolded, direct answer to the topic.
-      - DEEP EEAT INTEGRATION: Use the provided EEAT Context to inject authority and a unique professional voice.
-      - INTERACTIVE: Use rhetorical questions and engaging transitions.
+      - START WITH PAIN POINTS: Immediate resonance with reader struggles.
+      - SIMPLE LANGUAGE: Grade 3-4 level.
+      - BOLDED ANSWER: First paragraph after H1.
+      - DEEP EEAT INTEGRATION: Use provided context.
+      - SHORT PARAGRAPHS: Max 3 sentences.
+      - ${isGuestPost ? "GUEST POST STYLE: Educational, Teacher Persona, Third-person, Soft brand mention, Author Bio with backlink." : "BLOG POST STYLE: Persuasive, Consultant Persona, First-person, Keyword-focused, Strong CTA, Search Intent focused."}
+      - SEO: Meta Title (55-60 chars), Meta Description (140-155 chars), Internal link placeholders, Image placeholders with alt text.
 
       OUTPUT FORMAT: Return ONLY valid JSON.
       {
-        "metaTitle": "Title including primary keyword",
-        "metaDescription": "Description including primary keyword",
-        "content": "Full markdown content. Use placeholders like [[EXT_1]] for external links.",
+        "metaTitle": "Title (55-60 chars)",
+        "metaDescription": "Description (140-155 chars)",
+        "content": "Full markdown content following the non-negotiable structure.",
         "externalCitations": [
-          { "placeholder": "[[EXT_1]]", "siteName": "Forbes", "url": "https://forbes.com/..." },
-          { "placeholder": "[[EXT_2]]", "siteName": "Wikipedia", "url": "https://en.wikipedia.org/..." }
+          { "placeholder": "[[EXT_1]]", "siteName": "Authority Site", "url": "https://..." }
         ],
         "humanConfidence": 99
       }
@@ -99,13 +141,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let response;
     try {
       response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.1-pro-preview",
         contents: prompt,
         config: {
           systemInstruction,
           tools: [{ googleSearch: {} }],
           responseMimeType: "application/json",
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           responseSchema: {
             type: Type.OBJECT,
             properties: {
@@ -136,12 +177,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       // Fallback: Try without googleSearch tool if search is restricted (common with billing issues)
       response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.1-pro-preview",
         contents: prompt,
         config: {
           systemInstruction,
           responseMimeType: "application/json",
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           responseSchema: {
             type: Type.OBJECT,
             properties: {

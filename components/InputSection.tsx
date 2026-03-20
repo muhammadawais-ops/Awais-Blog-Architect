@@ -71,8 +71,8 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
             onChange={handleChange}
             className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all font-bold text-slate-800"
           >
-            <option value="blog">On-Page Blog Post (Google Policy Compliant)</option>
-            <option value="guest_post">Expert Guest Post (Backlink Optimized)</option>
+            <option value="blog">On Page Blog</option>
+            <option value="guest_post">Off Page Guest Post</option>
           </select>
         </div>
 
@@ -233,7 +233,7 @@ const InputSection: React.FC<InputSectionProps> = ({ inputs, setInputs, onGenera
           isLoading ? 'bg-indigo-400 cursor-wait' : 'bg-slate-900 hover:bg-black active:scale-[0.98]'
         }`}
       >
-        {isLoading ? 'Architecting Senior SEO Content...' : `Generate Pro ${inputs.contentType === 'guest_post' ? 'Guest Post' : 'Blog Post'}`}
+        {isLoading ? 'Architecting Senior SEO Content...' : `Generate Pro ${inputs.contentType === 'guest_post' ? 'Off Page Guest Post' : 'On Page Blog'}`}
       </button>
     </div>
   );
