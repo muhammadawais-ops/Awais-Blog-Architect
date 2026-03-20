@@ -2,9 +2,9 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import generateHandler from "./api/generate";
-import variationsHandler from "./api/variations";
 
 const app = express();
 const PORT = 3000;
@@ -62,20 +62,6 @@ app.post("/api/generate", async (req, res, next) => {
   }
 });
 
-// API Route for Semantic Variations
-app.post("/api/variations", async (req, res, next) => {
-  const requestId = Math.random().toString(36).substring(7);
-  console.log(`[${new Date().toISOString()}] [${requestId}] Variations request received`);
-  
-  try {
-    await variationsHandler(req as any, res as any);
-    console.log(`[${new Date().toISOString()}] [${requestId}] Variations completed`);
-  } catch (error: any) {
-    console.error(`[${requestId}] Variations Handler Error:`, error);
-    next(error);
-  }
-});
-
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error("Global Error Handler:", err);
@@ -92,11 +78,25 @@ async function setupVite() {
   const __dirname = path.dirname(__filename);
   const distPath = path.join(__dirname, "dist");
 
-  if (process.env.NODE_ENV === "production") {
+  const isProduction = process.env.NODE_ENV === "production" || process.env.NODE_ENV === "staging" || fs.existsSync(path.join(distPath, "index.html"));
+
+  if (isProduction) {
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       if (req.path.startsWith("/api/")) return res.status(404).json({ error: "API route not found" });
-      res.sendFile(path.join(distPath, "index.html"));
+      const indexPath = path.join(distPath, "index.html");
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath, (err) => {
+          if (err) {
+            console.error("Error sending index.html:", err);
+            if (!res.headersSent) {
+              res.status(500).send("Internal Server Error: Could not load frontend.");
+            }
+          }
+        });
+      } else {
+        res.status(404).send("Frontend not found. Please run build first.");
+      }
     });
   } else {
     try {

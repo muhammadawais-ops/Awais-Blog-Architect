@@ -1,55 +1,36 @@
 
 import { BlogInputs, GeneratedBlog } from "../types";
 
-/**
- * Calls the backend API to generate SEO-optimized blog content.
- * This approach keeps the API key secure on the server.
- */
-export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedBlog> => {
-  try {
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(inputs),
-    });
+export const generateSemanticVariations = async (primaryKeyword: string): Promise<string[]> => {
+  const response = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ task: 'semantic_variations', primaryKeyword })
+  });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Server error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error: any) {
-    console.error("API Error (generateSEOContent):", error);
-    throw error;
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to generate variations");
   }
+
+  const data = await response.json();
+  return data.variations || [];
 };
 
-/**
- * Calls the backend API to generate semantic variations.
- */
-export const generateSemanticVariations = async (primaryKeyword: string): Promise<string[]> => {
-  try {
-    const response = await fetch("/api/variations", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ primaryKeyword }),
-    });
+export const generateSEOContent = async (inputs: BlogInputs): Promise<GeneratedBlog> => {
+  const response = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inputs })
+  });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Server error: ${response.status}`);
+  if (!response.ok) {
+    const error = await response.json();
+    if (error.error === "API_KEY_MISSING") {
+      throw new Error("API_KEY_MISSING");
     }
-
-    const data = await response.json();
-    return data.variations || [];
-  } catch (error: any) {
-    console.error("API Error (generateSemanticVariations):", error);
-    return []; // Return empty list on error
+    throw new Error(error.error || "Failed to generate content");
   }
+
+  return await response.json();
 };
