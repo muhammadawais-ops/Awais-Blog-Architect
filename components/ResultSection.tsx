@@ -11,7 +11,12 @@ interface ResultSectionProps {
 const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
 
+  const metaTitle = blog?.metaTitle || 'No Title Generated';
+  const metaDescription = blog?.metaDescription || 'No Description Generated';
+  const content = blog?.content || '';
+
   const copyToClipboard = (text: string, section: string) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedSection(section);
     setTimeout(() => setCopiedSection(null), 2000);
@@ -41,9 +46,10 @@ const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
   };
 
   const parsedHtml = useMemo(() => {
+    if (!blog?.content) return '';
     const cleanContent = blog.content.replace(/^#\s*/, '# ');
     return marked.parse(cleanContent, { renderer });
-  }, [blog.content]);
+  }, [blog?.content]);
 
   return (
     <div className="space-y-8 animate-fadeIn pb-20">
@@ -56,26 +62,26 @@ const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
           <div className="flex justify-between items-start mb-2">
             <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase tracking-wider">SEO Meta Title</span>
             <button 
-              onClick={() => copyToClipboard(blog.metaTitle, 'title')}
+              onClick={() => copyToClipboard(metaTitle, 'title')}
               className="text-slate-400 hover:text-indigo-600 transition-colors"
             >
               <i className={`fas ${copiedSection === 'title' ? 'fa-check text-green-500' : 'fa-copy'}`}></i>
             </button>
           </div>
-          <p className="text-slate-900 font-bold leading-snug text-lg">{blog.metaTitle}</p>
+          <p className="text-slate-900 font-bold leading-snug text-lg">{metaTitle}</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 group relative transition-all hover:border-purple-200">
           <div className="flex justify-between items-start mb-2">
             <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded uppercase tracking-wider">SEO Meta Description</span>
             <button 
-              onClick={() => copyToClipboard(blog.metaDescription, 'desc')}
+              onClick={() => copyToClipboard(metaDescription, 'desc')}
               className="text-slate-400 hover:text-indigo-600 transition-colors"
             >
               <i className={`fas ${copiedSection === 'desc' ? 'fa-check text-green-500' : 'fa-copy'}`}></i>
             </button>
           </div>
-          <p className="text-slate-600 text-sm leading-relaxed">{blog.metaDescription}</p>
+          <p className="text-slate-600 text-sm leading-relaxed">{metaDescription}</p>
         </div>
       </div>
 
@@ -112,7 +118,7 @@ const ResultSection: React.FC<ResultSectionProps> = ({ blog }) => {
             <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded">RESEARCH-BACKED</span>
           </div>
           <button
-            onClick={() => copyToClipboard(blog.content, 'content')}
+            onClick={() => copyToClipboard(content, 'content')}
             className="flex items-center space-x-2 text-sm text-indigo-600 hover:bg-indigo-50 px-3 py-2 rounded-lg font-bold transition-all"
           >
             <i className={`fas ${copiedSection === 'content' ? 'fa-check text-green-500' : 'fa-copy'}`}></i>

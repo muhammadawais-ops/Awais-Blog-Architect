@@ -20,11 +20,29 @@ const MetricCard: React.FC<{ label: string; value: string | number; sub: string;
 );
 
 const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ metrics }) => {
-  const isOptimal = metrics.ariGrade <= 9;
-  const humanScore = 100 - metrics.aiScore;
+  // Safe defaults to prevent crashes if metrics are missing
+  const m = {
+    aiScore: metrics?.aiScore ?? 0,
+    ariGrade: metrics?.ariGrade ?? 0,
+    perplexity: metrics?.perplexity ?? 0,
+    burstiness: metrics?.burstiness ?? 0,
+    vocabularyDiversity: metrics?.vocabularyDiversity ?? 0,
+    entropy: metrics?.entropy ?? 0,
+    fleschScore: metrics?.fleschScore ?? 0,
+    fogIndex: metrics?.fogIndex ?? 0,
+    avgSentenceLength: metrics?.avgSentenceLength ?? 0,
+    complexWordPercentage: metrics?.complexWordPercentage ?? 0,
+    syntacticComplexity: metrics?.syntacticComplexity ?? 0,
+    semanticCoherence: metrics?.semanticCoherence ?? 0,
+    passiveVoiceRatio: metrics?.passiveVoiceRatio ?? 0,
+    hardSentences: metrics?.hardSentences ?? 0,
+  };
+
+  const isOptimal = m.ariGrade <= 9;
+  const humanScore = 100 - m.aiScore;
   
   // Dynamic color based on AI Score (Lower is better/greener)
-  const aiColorClass = metrics.aiScore > 60 ? 'text-rose-400' : metrics.aiScore > 30 ? 'text-amber-400' : 'text-emerald-400';
+  const aiColorClass = m.aiScore > 60 ? 'text-rose-400' : m.aiScore > 30 ? 'text-amber-400' : 'text-emerald-400';
 
   return (
     <div className="bg-slate-950 text-white rounded-[2.5rem] p-8 md:p-12 shadow-3xl mb-12 border border-slate-800 relative overflow-hidden">
@@ -43,14 +61,14 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ metrics }) => {
           </div>
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <p className={`text-4xl font-black ${aiColorClass}`}>{metrics.aiScore}%</p>
+              <p className={`text-4xl font-black ${aiColorClass}`}>{m.aiScore}%</p>
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">AI Score</p>
               <p className="text-[8px] text-slate-400 mt-1 font-bold italic">Human: {humanScore}%</p>
             </div>
             <div className="w-px h-12 bg-slate-800"></div>
             <div className="text-center">
               <p className={`text-4xl font-black ${isOptimal ? 'text-blue-400' : 'text-amber-400'}`}>
-                {metrics.ariGrade}
+                {m.ariGrade}
               </p>
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Grade Level</p>
             </div>
@@ -60,28 +78,28 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ metrics }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
           <div className="space-y-4">
             <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest border-l-4 border-indigo-600 pl-3">AI Detection Parameters</h4>
-            <MetricCard label="Perplexity" value={metrics.perplexity} sub="Predictability Index" icon="fa-shuffle" color="bg-purple-500" />
-            <MetricCard label="Burstiness" value={metrics.burstiness} sub="Sentence Variance" icon="fa-wave-square" color="bg-blue-500" />
-            <MetricCard label="Vocabulary Diversity" value={`${metrics.vocabularyDiversity}%`} sub="Unique Synonyms" icon="fa-book" color="bg-emerald-500" />
-            <MetricCard label="Entropy" value={metrics.entropy} sub="Info Density" icon="fa-bolt" color="bg-yellow-500" />
+            <MetricCard label="Perplexity" value={m.perplexity} sub="Predictability Index" icon="fa-shuffle" color="bg-purple-500" />
+            <MetricCard label="Burstiness" value={m.burstiness} sub="Sentence Variance" icon="fa-wave-square" color="bg-blue-500" />
+            <MetricCard label="Vocabulary Diversity" value={`${m.vocabularyDiversity}%`} sub="Unique Synonyms" icon="fa-book" color="bg-emerald-500" />
+            <MetricCard label="Entropy" value={m.entropy} sub="Info Density" icon="fa-bolt" color="bg-yellow-500" />
           </div>
 
           <div className="space-y-4">
             <h4 className="text-xs font-black text-rose-400 uppercase tracking-widest border-l-4 border-rose-600 pl-3">Readability Metrics</h4>
-            <MetricCard label="Flesch Ease" value={metrics.fleschScore} sub="Reading Comfort" icon="fa-glasses" color="bg-rose-500" />
-            <MetricCard label="Gunning Fog" value={metrics.fogIndex} sub="Education Level" icon="fa-graduation-cap" color="bg-indigo-500" />
-            <MetricCard label="Avg Sentence" value={metrics.avgSentenceLength} sub="Words/Sentence" icon="fa-ruler-horizontal" color="bg-teal-500" />
-            <MetricCard label="Complexity Ratio" value={`${metrics.complexWordPercentage}%`} sub="Advanced Words" icon="fa-brain" color="bg-cyan-500" />
+            <MetricCard label="Flesch Ease" value={m.fleschScore} sub="Reading Comfort" icon="fa-glasses" color="bg-rose-500" />
+            <MetricCard label="Gunning Fog" value={m.fogIndex} sub="Education Level" icon="fa-graduation-cap" color="bg-indigo-500" />
+            <MetricCard label="Avg Sentence" value={m.avgSentenceLength} sub="Words/Sentence" icon="fa-ruler-horizontal" color="bg-teal-500" />
+            <MetricCard label="Complexity Ratio" value={`${m.complexWordPercentage}%`} sub="Advanced Words" icon="fa-brain" color="bg-cyan-500" />
           </div>
 
           <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
             <h4 className="text-xs font-black text-amber-400 uppercase tracking-widest mb-6">Linguistic Load Audit</h4>
             <div className="space-y-6">
               {[
-                { label: 'Syntactic Complexity', val: metrics.syntacticComplexity, target: 40 },
-                { label: 'Semantic Coherence', val: metrics.semanticCoherence, target: 90 },
-                { label: 'Passive Voice Ratio', val: metrics.passiveVoiceRatio, target: 15 },
-                { label: 'Hard Sentences', val: metrics.hardSentences, target: 10 }
+                { label: 'Syntactic Complexity', val: m.syntacticComplexity, target: 40 },
+                { label: 'Semantic Coherence', val: m.semanticCoherence, target: 90 },
+                { label: 'Passive Voice Ratio', val: m.passiveVoiceRatio, target: 15 },
+                { label: 'Hard Sentences', val: m.hardSentences, target: 10 }
               ].map((item, i) => (
                 <div key={i}>
                   <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1 uppercase">
