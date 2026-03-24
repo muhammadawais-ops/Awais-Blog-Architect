@@ -19,15 +19,9 @@ const App: React.FC = () => {
     topic: '',
     primaryKeyword: '',
     secondaryKeywords: '',
-    wordCount: 800,
+    wordCount: 1200,
     websiteUrl: '',
-    businessDetails: '',
-    brandName: '',
-    contentType: 'blog',
-    searchIntent: 'Informational',
-    backlinkUrl: '',
-    anchorText: '',
-    targetSiteContext: ''
+    businessDetails: ''
   });
 
   const [status, setStatus] = useState<GenerationStatus>(GenerationStatus.IDLE);
@@ -51,10 +45,23 @@ const App: React.FC = () => {
       }, 100);
     } catch (err: any) {
       console.error("Architect Error:", err);
-      if (err.message === "API_KEY_MISSING") {
+      
+      const errorMsg = err.message || "";
+      const isAuthError = errorMsg.includes("API_KEY_INVALID") || 
+                          errorMsg.includes("API key not valid") || 
+                          errorMsg.includes("API_KEY_MISSING") ||
+                          errorMsg.includes("401") ||
+                          errorMsg.includes("403");
+
+      if (isAuthError) {
         setShowKeySelector(true);
+        setError("Your API Key is either missing, invalid, or doesn't have the required permissions. Please select a valid API key from a paid Google Cloud project.");
+      } else if (errorMsg.includes("FUNCTION_INVOCATION_FAILED") || errorMsg.includes("Server Error (504)")) {
+        setError("The server encountered a platform-level timeout or crash. This can happen if the AI research takes too long or if there's a connection issue. I've added a fallback mechanism to try again without research tools if the first attempt fails. Please try once more.");
+      } else {
+        setError(errorMsg || "Failed to generate content.");
       }
-      setError(err.message || "Failed to generate content.");
+      
       setStatus(GenerationStatus.ERROR);
     }
   };
@@ -152,7 +159,20 @@ const App: React.FC = () => {
                 </a>
               </div>
             ) : (
-              <button onClick={() => setStatus(GenerationStatus.IDLE)} className="px-6 py-2 bg-slate-900 text-white rounded-full font-bold text-sm">Retry Session</button>
+              <div className="flex flex-col items-center gap-4">
+                <button 
+                  onClick={handleGenerate} 
+                  className="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-black text-sm shadow-lg transition-all active:scale-95"
+                >
+                  Try Again Now
+                </button>
+                <button 
+                  onClick={() => setStatus(GenerationStatus.IDLE)} 
+                  className="text-[10px] text-slate-400 hover:text-slate-600 font-bold uppercase tracking-widest"
+                >
+                  Reset Session
+                </button>
+              </div>
             )}
           </div>
         )}

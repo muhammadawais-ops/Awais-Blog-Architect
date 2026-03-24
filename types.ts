@@ -1,6 +1,4 @@
 
-export type ContentType = 'blog' | 'guest_post';
-
 export interface BlogInputs {
   topic: string;
   primaryKeyword: string;
@@ -8,12 +6,6 @@ export interface BlogInputs {
   wordCount: number;
   websiteUrl: string;
   businessDetails: string;
-  brandName: string;
-  contentType: ContentType;
-  searchIntent: 'Informational' | 'Commercial' | 'Transactional';
-  backlinkUrl?: string;
-  anchorText?: string;
-  targetSiteContext?: string;
 }
 
 export interface GroundingSource {

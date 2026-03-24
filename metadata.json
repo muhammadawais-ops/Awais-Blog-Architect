@@ -1,5 +1,5 @@
 {
   "name": "Awais Blog Architect",
-  "description": "A high-end content generation tool that crafts SEO, AIO, and AEO optimized blog and guest posts with natural external linking, semantic keyword variations, and seamless target domain integration.",
+  "description": "A high-end content generation tool that crafts SEO, AIO, and AEO optimized blog posts with natural external linking and seamless target domain integration using Gemini's advanced reasoning.",
   "requestFramePermissions": []
 }
